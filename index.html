@@ -120,6 +120,38 @@
   .tip{margin-top:24px;background:var(--paper-deep);border-radius:14px;padding:16px 18px;font-size:13px;color:var(--ink-soft);}
   .tip b{color:var(--ink);}
 
+  /* Dashboard */
+  .dash{margin-bottom:22px;}
+  .streak{
+    background:linear-gradient(135deg,var(--vermillion),var(--vermillion-deep));
+    color:#fff5e9;border-radius:18px;padding:18px 20px;
+    display:flex;align-items:center;gap:16px;
+    box-shadow:0 8px 22px rgba(168,57,47,.32);
+  }
+  .streak .flame{font-size:40px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));}
+  .streak .sk-n{font-family:"Noto Serif SC",serif;font-size:38px;font-weight:900;line-height:1;}
+  .streak .sk-n small{font-size:16px;font-weight:700;margin-left:3px;}
+  .streak .sk-lbl{font-size:13px;opacity:.92;margin-top:2px;}
+  .streak .sk-side{margin-left:auto;text-align:right;font-size:12px;opacity:.92;line-height:1.5;}
+  .streak .sk-today{display:inline-block;margin-top:4px;background:rgba(255,255,255,.22);border-radius:999px;padding:2px 10px;font-weight:700;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 15px;box-shadow:0 2px 0 var(--line);}
+  .stat .st-lbl{font-size:12px;color:var(--ink-soft);}
+  .stat .st-val{font-family:"Noto Serif SC",serif;font-size:22px;font-weight:700;color:var(--ink);margin-top:2px;}
+  .stat .st-val small{font-size:13px;color:var(--ink-soft);font-weight:400;}
+  .pbar{height:8px;background:var(--paper-deep);border-radius:999px;overflow:hidden;margin-top:8px;}
+  .pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--jade),#6fa392);border-radius:999px;transition:width .5s ease;}
+  .badges{margin-top:14px;}
+  .badges .bg-ttl{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+  .badge-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .badge{
+    display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:6px 12px;font-size:12px;color:var(--ink-soft);
+    opacity:.45;filter:grayscale(1);transition:.3s;
+  }
+  .badge.on{opacity:1;filter:none;color:var(--ink);border-color:var(--gold);box-shadow:0 2px 8px rgba(176,141,76,.25);}
+  .badge .b-ico{font-size:16px;}
+
   /* Tones */
   .tone-card{
     background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;
@@ -219,6 +251,35 @@
 
   <!-- HOME -->
   <section id="home" class="show">
+    <div class="dash" id="dash">
+      <div class="streak">
+        <span class="flame">🔥</span>
+        <div>
+          <div class="sk-n"><span id="sk-num">0</span><small>日連続</small></div>
+          <div class="sk-lbl">毎日つづけて記録を伸ばそう</div>
+        </div>
+        <div class="sk-side">
+          最高 <b id="sk-best">0</b> 日<br>
+          <span class="sk-today" id="sk-today">今日はまだ</span>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="st-lbl">学習した単語</div>
+          <div class="st-val"><span id="st-learned">0</span> <small>/ <span id="st-total">0</span></small></div>
+          <div class="pbar"><i id="st-bar" style="width:0%"></i></div>
+        </div>
+        <div class="stat">
+          <div class="st-lbl">クイズ最高点</div>
+          <div class="st-val"><span id="st-qbest">0</span> <small>/ 10</small></div>
+          <div class="st-lbl" style="margin-top:6px">挑戦 <span id="st-qcount">0</span> 回 ・ 学習 <span id="st-days">0</span> 日</div>
+        </div>
+      </div>
+      <div class="badges">
+        <div class="bg-ttl">獲得バッジ</div>
+        <div class="badge-row" id="badge-row"></div>
+      </div>
+    </div>
     <p class="lead">中国語学習の最初の一歩へようこそ。発音（声調）・基本単語・日常フレーズを、音声付きで学べます。各カードの 🔊 を押すと中国語の発音が流れます。</p>
     <div class="menu">
       <button onclick="go('tone')"><span class="big">声调</span><span class="ttl">声調を学ぶ</span><span class="dsc">4つの音の高低</span></button>
@@ -285,6 +346,7 @@ if(window.speechSynthesis){
   speechSynthesis.onvoiceschanged=pickVoice; pickVoice();
 }
 function speak(text){
+  if(typeof markStudy==='function')markStudy();
   if(!window.speechSynthesis){return;}
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(text);
@@ -572,6 +634,49 @@ const wordByCh={};
 LEVELS.forEach(lv=>Object.values(data[lv].vocab).forEach(a=>a.forEach(w=>{wordByCh[w.ch]=w;})));
 function favWords(){return favs.map(ch=>wordByCh[ch]).filter(Boolean);}
 
+/* ---------- 学習記録・進捗 ---------- */
+const PROG_KEY='zh-progress';
+let prog={lastDate:'',streak:0,best:0,days:0,learned:{},quizPlayed:0,quizBest:0};
+try{const p=JSON.parse(localStorage.getItem(PROG_KEY));if(p)prog=Object.assign(prog,p);}catch(e){}
+function saveProg(){try{localStorage.setItem(PROG_KEY,JSON.stringify(prog));}catch(e){}}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dayDiff(a,b){return Math.round((new Date(b)-new Date(a))/86400000);}
+(function(){if(prog.lastDate){const d=dayDiff(prog.lastDate,todayStr());if(d>1){prog.streak=0;saveProg();}}})();
+function markStudy(){
+  const t=todayStr();
+  if(prog.lastDate===t){return;}
+  if(prog.lastDate){const diff=dayDiff(prog.lastDate,t);prog.streak=diff===1?prog.streak+1:1;}
+  else{prog.streak=1;}
+  prog.lastDate=t;prog.days++;
+  if(prog.streak>prog.best)prog.best=prog.streak;
+  saveProg();renderProgress();
+}
+function learnWord(ch){if(ch&&wordByCh[ch]&&!prog.learned[ch]){prog.learned[ch]=true;saveProg();renderProgress();}}
+function recordQuiz(score){prog.quizPlayed++;if(score>prog.quizBest)prog.quizBest=score;saveProg();renderProgress();}
+const BADGES=[
+  {ico:'🌱',name:'はじめの一歩',test:p=>p.days>=1},
+  {ico:'🔥',name:'3日連続',test:p=>p.best>=3},
+  {ico:'⚡',name:'7日連続',test:p=>p.best>=7},
+  {ico:'👑',name:'30日連続',test:p=>p.best>=30},
+  {ico:'📖',name:'単語10',test:p=>Object.keys(p.learned).length>=10},
+  {ico:'📚',name:'単語50',test:p=>Object.keys(p.learned).length>=50},
+  {ico:'🎓',name:'単語100',test:p=>Object.keys(p.learned).length>=100},
+  {ico:'💯',name:'クイズ満点',test:p=>p.quizBest>=10}
+];
+function renderProgress(){
+  const total=Object.keys(wordByCh).length;
+  const learned=Object.keys(prog.learned).filter(ch=>wordByCh[ch]).length;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('sk-num',prog.streak);set('sk-best',prog.best);
+  const today=document.getElementById('sk-today');
+  if(today)today.textContent=prog.lastDate===todayStr()?'今日も学習！✓':'今日はまだ';
+  set('st-learned',learned);set('st-total',total);
+  const bar=document.getElementById('st-bar');if(bar)bar.style.width=(total?Math.round(learned/total*100):0)+'%';
+  set('st-qbest',prog.quizBest);set('st-qcount',prog.quizPlayed);set('st-days',prog.days);
+  const row=document.getElementById('badge-row');
+  if(row){row.innerHTML='';BADGES.forEach(b=>{const on=b.test(prog);const el=document.createElement('div');el.className='badge'+(on?' on':'');el.innerHTML=`<span class="b-ico">${b.ico}</span>${b.name}`;row.appendChild(el);});}
+}
+
 /* ---------- 単語 ---------- */
 const catWrap=document.getElementById('cats');
 const cardWrap=document.getElementById('cards');
@@ -603,7 +708,7 @@ function renderCards(){
         <div class="face back"><div class="jp">${w.jp}</div><div class="pin2">${w.pin}</div>
           <button class="spk" aria-label="発音">${SPK}</button></div>
       </div>`;
-    f.addEventListener('click',e=>{ if(e.target.closest('.spk')||e.target.closest('.fav'))return; f.classList.toggle('flipped'); });
+    f.addEventListener('click',e=>{ if(e.target.closest('.spk')||e.target.closest('.fav'))return; f.classList.toggle('flipped'); if(f.classList.contains('flipped')){markStudy();learnWord(w.ch);} });
     f.querySelector('.spk').onclick=e=>{e.stopPropagation();speak(w.ch);};
     f.querySelector('.fav').onclick=e=>{
       e.stopPropagation();toggleFav(w.ch);buildCats();
@@ -747,6 +852,7 @@ function renderScenes(){
 }
 buildSceneCats();
 renderScenes();
+renderProgress();
 
 /* ---------- クイズ ---------- */
 let allWords=[];
@@ -761,6 +867,7 @@ function startQuiz(){
 function renderQ(){
   const area=document.getElementById('quiz-area');
   if(qIdx>=qSet.length){
+    recordQuiz(qScore);
     let msg='また挑戦してみましょう！';
     if(qScore>=9)msg='完璧です！太棒了！(すばらしい)';
     else if(qScore>=7)msg='その調子！よくできました。';
@@ -790,6 +897,7 @@ function renderQ(){
     const b=document.createElement('button');b.className='opt';b.textContent=o.jp;
     b.onclick=()=>{
       const all=ow.querySelectorAll('.opt');all.forEach(x=>x.disabled=true);
+      markStudy();learnWord(w.ch);
       if(o.jp===w.jp){b.classList.add('correct');qScore++;}
       else{b.classList.add('wrong');addFav(w.ch);all.forEach(x=>{if(x.textContent===w.jp)x.classList.add('correct');});}
       speak(w.ch);
