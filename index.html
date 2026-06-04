@@ -134,6 +134,12 @@
   .back .pin2{font-size:13px;color:var(--gold);margin-top:6px;}
   .back .spk{position:absolute;bottom:10px;right:10px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:var(--paper);}
   .back .spk:hover{background:var(--vermillion);}
+  .fav{position:absolute;top:7px;right:9px;border:none;background:transparent;cursor:pointer;
+    font-size:19px;line-height:1;color:rgba(38,33,28,.22);padding:2px;z-index:2;transition:.15s;}
+  .fav.on{color:var(--gold);transform:scale(1.12);}
+  .fav:active{transform:scale(.82);}
+  .empty{grid-column:1/-1;background:var(--paper-deep);border-radius:14px;padding:24px 18px;
+    font-size:13px;color:var(--ink-soft);text-align:center;line-height:1.8;}
 
   /* Phrases */
   .ph{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 0 var(--line);}
@@ -313,6 +319,7 @@ function go(sec){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.sec===sec));
   window.scrollTo({top:0,behavior:'smooth'});
   if(sec==='quiz')startQuiz();
+  if(sec==='vocab'){buildCats();renderCards();}
 }
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>go(t.dataset.sec)));
 
@@ -337,30 +344,61 @@ tones.forEach(t=>{
   tl.appendChild(d);
 });
 
+/* ---------- 苦手単語（お気に入り） ---------- */
+const FAV_KEY='zh-favs',FAV_CAT='★ 苦手';
+let favs=[];
+try{favs=JSON.parse(localStorage.getItem(FAV_KEY)||'[]');}catch(e){favs=[];}
+function saveFavs(){try{localStorage.setItem(FAV_KEY,JSON.stringify(favs));}catch(e){}}
+function isFav(ch){return favs.includes(ch);}
+function toggleFav(ch){favs=isFav(ch)?favs.filter(x=>x!==ch):favs.concat(ch);saveFavs();}
+function addFav(ch){if(!isFav(ch)){favs.push(ch);saveFavs();}}
+const wordByCh={};
+Object.values(vocab).forEach(a=>a.forEach(w=>{wordByCh[w.ch]=w;}));
+function favWords(){return favs.map(ch=>wordByCh[ch]).filter(Boolean);}
+
 /* ---------- 単語 ---------- */
 const catWrap=document.getElementById('cats');
 const cardWrap=document.getElementById('cards');
 let curCat=Object.keys(vocab)[0];
-Object.keys(vocab).forEach(c=>{
-  const b=document.createElement('button');b.className='cat'+(c===curCat?' active':'');b.textContent=c;
-  b.onclick=()=>{curCat=c;document.querySelectorAll('.cat').forEach(x=>x.classList.toggle('active',x.textContent===c));renderCards();};
-  catWrap.appendChild(b);
-});
+function buildCats(){
+  catWrap.innerHTML='';
+  [FAV_CAT,...Object.keys(vocab)].forEach(c=>{
+    const b=document.createElement('button');
+    b.className='cat'+(c===curCat?' active':'');
+    b.textContent=c===FAV_CAT?`${FAV_CAT} (${favWords().length})`:c;
+    b.onclick=()=>{curCat=c;buildCats();renderCards();};
+    catWrap.appendChild(b);
+  });
+}
 function renderCards(){
   cardWrap.innerHTML='';
-  vocab[curCat].forEach(w=>{
+  const list=curCat===FAV_CAT?favWords():vocab[curCat];
+  if(curCat===FAV_CAT&&list.length===0){
+    cardWrap.innerHTML='<div class="empty">まだ苦手単語がありません。<br>カードの☆を押すか、クイズで間違えた単語が自動で登録されます。</div>';
+    return;
+  }
+  list.forEach(w=>{
     const f=document.createElement('div');f.className='flip';
     f.innerHTML=`
       <div class="flip-in">
-        <div class="face front"><div class="ch">${w.ch}</div><div class="pin">${w.pin}</div><div class="hint">TAP</div></div>
+        <div class="face front">
+          <button class="fav${isFav(w.ch)?' on':''}" aria-label="苦手に登録">${isFav(w.ch)?'★':'☆'}</button>
+          <div class="ch">${w.ch}</div><div class="pin">${w.pin}</div><div class="hint">TAP</div></div>
         <div class="face back"><div class="jp">${w.jp}</div><div class="pin2">${w.pin}</div>
           <button class="spk" aria-label="発音">${SPK}</button></div>
       </div>`;
-    f.addEventListener('click',e=>{ if(e.target.closest('.spk'))return; f.classList.toggle('flipped'); });
+    f.addEventListener('click',e=>{ if(e.target.closest('.spk')||e.target.closest('.fav'))return; f.classList.toggle('flipped'); });
     f.querySelector('.spk').onclick=e=>{e.stopPropagation();speak(w.ch);};
+    f.querySelector('.fav').onclick=e=>{
+      e.stopPropagation();toggleFav(w.ch);buildCats();
+      if(curCat===FAV_CAT){renderCards();return;}
+      const btn=f.querySelector('.fav'),on=isFav(w.ch);
+      btn.classList.toggle('on',on);btn.textContent=on?'★':'☆';
+    };
     cardWrap.appendChild(f);
   });
 }
+buildCats();
 renderCards();
 
 /* ---------- フレーズ ---------- */
@@ -418,7 +456,7 @@ function renderQ(){
     b.onclick=()=>{
       const all=ow.querySelectorAll('.opt');all.forEach(x=>x.disabled=true);
       if(o.jp===w.jp){b.classList.add('correct');qScore++;}
-      else{b.classList.add('wrong');all.forEach(x=>{if(x.textContent===w.jp)x.classList.add('correct');});}
+      else{b.classList.add('wrong');addFav(w.ch);all.forEach(x=>{if(x.textContent===w.jp)x.classList.add('correct');});}
       speak(w.ch);
       area.querySelector('#qnext').classList.add('show');
       area.querySelector('.q-meta').children[1].textContent='正解 '+qScore;
