@@ -120,6 +120,15 @@
   .tip{margin-top:24px;background:var(--paper-deep);border-radius:14px;padding:16px 18px;font-size:13px;color:var(--ink-soft);}
   .tip b{color:var(--ink);}
 
+  /* Setting toggle */
+  .setting{display:flex;align-items:center;gap:14px;background:var(--paper-deep);border-radius:14px;padding:12px 16px;margin-bottom:18px;}
+  .set-lbl{flex:1;font-size:14px;font-weight:700;color:var(--ink);display:flex;flex-direction:column;}
+  .set-lbl small{font-weight:400;font-size:11.5px;color:var(--ink-soft);margin-top:2px;line-height:1.4;}
+  .toggle{flex-shrink:0;width:50px;height:28px;border-radius:999px;border:none;background:#cabfa8;cursor:pointer;position:relative;transition:.25s;padding:0;}
+  .toggle.on{background:var(--jade);}
+  .toggle .knob{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+  .toggle.on .knob{left:25px;}
+
   /* Dashboard */
   .dash{margin-bottom:22px;}
   .streak{
@@ -285,6 +294,10 @@
         <div class="badge-row" id="badge-row"></div>
       </div>
     </div>
+    <div class="setting">
+      <span class="set-lbl">🔇 サイレントモード<small>音声の自動再生をオフ。🔊ボタンは手動で使えます。クイズはリスニングを除く形式に。</small></span>
+      <button class="toggle" id="silent-toggle" role="switch" aria-label="サイレントモード"><span class="knob"></span></button>
+    </div>
     <p class="lead">中国語学習の最初の一歩へようこそ。発音（声調）・基本単語・日常フレーズを、音声付きで学べます。各カードの 🔊 を押すと中国語の発音が流れます。</p>
     <div class="menu">
       <button onclick="go('tone')"><span class="big">声调</span><span class="ttl">声調を学ぶ</span><span class="dsc">4つの音の高低</span></button>
@@ -338,6 +351,10 @@
 </div>
 
 <script>
+/* ---------- 設定（サイレント） ---------- */
+let silent=false;
+try{silent=localStorage.getItem('zh-silent')==='1';}catch(e){}
+
 /* ---------- 音声合成 ---------- */
 let zhVoice=null;
 function pickVoice(){
@@ -350,8 +367,9 @@ function pickVoice(){
 if(window.speechSynthesis){
   speechSynthesis.onvoiceschanged=pickVoice; pickVoice();
 }
-function speak(text){
+function speak(text,manual){
   if(typeof markStudy==='function')markStudy();
+  if(silent&&!manual){return;}
   if(!window.speechSynthesis){return;}
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(text);
@@ -748,7 +766,7 @@ tones.forEach(t=>{
       <div class="tone-mean">意味：${t.mean}</div>
     </div>
     <button class="spk" aria-label="発音">${SPK}</button>`;
-  d.querySelector('.spk').onclick=()=>speak(t.ch);
+  d.querySelector('.spk').onclick=()=>speak(t.ch,true);
   tl.appendChild(d);
 });
 
@@ -839,7 +857,7 @@ function renderCards(){
           <button class="spk" aria-label="発音">${SPK}</button></div>
       </div>`;
     f.addEventListener('click',e=>{ if(e.target.closest('.spk')||e.target.closest('.fav'))return; f.classList.toggle('flipped'); if(f.classList.contains('flipped')){markStudy();learnWord(w.ch);} });
-    f.querySelector('.spk').onclick=e=>{e.stopPropagation();speak(w.ch);};
+    f.querySelector('.spk').onclick=e=>{e.stopPropagation();speak(w.ch,true);};
     f.querySelector('.fav').onclick=e=>{
       e.stopPropagation();toggleFav(w.ch);buildCats();
       if(curCat===FAV_CAT){renderCards();return;}
@@ -865,7 +883,7 @@ function renderPhrases(){
         <div class="ph-jp">${p.jp}</div>
       </div>
       <button class="spk" aria-label="発音">${SPK}</button>`;
-    d.querySelector('.spk').onclick=()=>speak(p.ch);
+    d.querySelector('.spk').onclick=()=>speak(p.ch,true);
     pl.appendChild(d);
   });
 }
@@ -976,13 +994,25 @@ function renderScenes(){
         <div class="ph-jp">${p.jp}</div>
       </div>
       <button class="spk" aria-label="発音">${SPK}</button>`;
-    d.querySelector('.spk').onclick=()=>speak(p.ch);
+    d.querySelector('.spk').onclick=()=>speak(p.ch,true);
     sceneList.appendChild(d);
   });
 }
 buildSceneCats();
 renderScenes();
 renderProgress();
+
+/* ---------- サイレント切替 ---------- */
+const silentToggle=document.getElementById('silent-toggle');
+function renderSilent(){silentToggle.classList.toggle('on',silent);silentToggle.setAttribute('aria-checked',silent?'true':'false');}
+silentToggle.onclick=()=>{
+  silent=!silent;
+  try{localStorage.setItem('zh-silent',silent?'1':'0');}catch(e){}
+  if(silent&&window.speechSynthesis)speechSynthesis.cancel();
+  renderSilent();
+  if(document.getElementById('quiz').classList.contains('show'))startQuiz();
+};
+renderSilent();
 
 /* ---------- クイズ ---------- */
 let allWords=[];
@@ -998,7 +1028,8 @@ function distractors(field,correctVal,n){
 }
 function startQuiz(){
   refreshWords();
-  qSet=shuffle(allWords).slice(0,10).map(w=>({w,type:QTYPES[Math.floor(Math.random()*QTYPES.length)]}));
+  const types=silent?QTYPES.filter(t=>t!=='listen'):QTYPES;
+  qSet=shuffle(allWords).slice(0,10).map(w=>({w,type:types[Math.floor(Math.random()*types.length)]}));
   qIdx=0;qScore=0;renderQ();
 }
 function renderQ(){
@@ -1042,9 +1073,9 @@ function renderQ(){
     <div class="q-opts${optCn?' cn':''}"></div>
     <button class="q-next" id="qnext">次へ →</button>
   </div>`;
-  const spk=area.querySelector('.spk');if(spk)spk.onclick=()=>speak(w.ch);
-  const play=area.querySelector('#qplay');if(play)play.onclick=()=>speak(w.ch);
-  if(autoplay)speak(w.ch);
+  const spk=area.querySelector('.spk');if(spk)spk.onclick=()=>speak(w.ch,true);
+  const play=area.querySelector('#qplay');if(play)play.onclick=()=>speak(w.ch,true);
+  if(autoplay)speak(w.ch,true);
   const ow=area.querySelector('.q-opts');
   opts.forEach(o=>{
     const b=document.createElement('button');b.className='opt';b.textContent=o[field];
