@@ -213,6 +213,7 @@
     <button class="tab" data-sec="tone"><span class="cn">声</span>声調</button>
     <button class="tab" data-sec="vocab"><span class="cn">词</span>単語</button>
     <button class="tab" data-sec="phrase"><span class="cn">话</span>フレーズ</button>
+    <button class="tab" data-sec="scene"><span class="cn">境</span>場面別</button>
     <button class="tab" data-sec="quiz"><span class="cn">考</span>クイズ</button>
   </nav>
 
@@ -223,6 +224,7 @@
       <button onclick="go('tone')"><span class="big">声调</span><span class="ttl">声調を学ぶ</span><span class="dsc">4つの音の高低</span></button>
       <button onclick="go('vocab')"><span class="big">单词</span><span class="ttl">単語カード</span><span class="dsc">めくって暗記</span></button>
       <button onclick="go('phrase')"><span class="big">会话</span><span class="ttl">フレーズ集</span><span class="dsc">そのまま使える</span></button>
+      <button onclick="go('scene')"><span class="big">场景</span><span class="ttl">場面別会話</span><span class="dsc">旅行・生活で使う</span></button>
       <button onclick="go('quiz')"><span class="big">测验</span><span class="ttl">クイズ</span><span class="dsc">4択で確認</span></button>
     </div>
     <div class="tip">
@@ -251,6 +253,13 @@
   <section id="phrase">
     <p class="lead">あいさつや会話で役立つ基本フレーズ。🔊 を押して声に出して練習してみましょう。</p>
     <div id="phrase-list"></div>
+  </section>
+
+  <!-- SCENE -->
+  <section id="scene">
+    <p class="lead">空港・ホテル・レストランなど、場面ごとにそのまま使える会話表現。🔊 で発音を確認できます。</p>
+    <div class="cats" id="scene-cats"></div>
+    <div id="scene-list"></div>
   </section>
 
   <!-- QUIZ -->
@@ -626,6 +635,107 @@ function renderPhrases(){
   });
 }
 renderPhrases();
+
+/* ---------- 場面別会話 ---------- */
+const scenes={
+  '空港':[
+    {ch:'我要办理登机手续。',pin:'wǒ yào bànlǐ dēngjī shǒuxù.',jp:'チェックインをお願いします。'},
+    {ch:'这是我的护照和机票。',pin:'zhè shì wǒ de hùzhào hé jīpiào.',jp:'これがパスポートと航空券です。'},
+    {ch:'我可以带这个上飞机吗？',pin:'wǒ kěyǐ dài zhège shàng fēijī ma?',jp:'これを機内に持ち込めますか？'},
+    {ch:'登机口在哪里？',pin:'dēngjīkǒu zài nǎlǐ?',jp:'搭乗ゲートはどこですか？'},
+    {ch:'航班晚点了吗？',pin:'hángbān wǎndiǎn le ma?',jp:'便は遅れていますか？'},
+    {ch:'我的行李丢了。',pin:'wǒ de xíngli diū le.',jp:'荷物が見つかりません。'},
+    {ch:'请问行李提取处在哪儿？',pin:'qǐngwèn xíngli tíqǔchù zài nǎr?',jp:'手荷物受取所はどこですか？'}
+  ],
+  'ホテル':[
+    {ch:'我预订了一个房间。',pin:'wǒ yùdìng le yí ge fángjiān.',jp:'部屋を予約しています。'},
+    {ch:'我想办理入住。',pin:'wǒ xiǎng bànlǐ rùzhù.',jp:'チェックインしたいです。'},
+    {ch:'有没有可以看风景的房间？',pin:'yǒu méiyǒu kěyǐ kàn fēngjǐng de fángjiān?',jp:'景色の見える部屋はありますか？'},
+    {ch:'几点退房？',pin:'jǐ diǎn tuìfáng?',jp:'チェックアウトは何時ですか？'},
+    {ch:'房间里没有热水。',pin:'fángjiān lǐ méiyǒu rèshuǐ.',jp:'部屋にお湯が出ません。'},
+    {ch:'可以帮我叫醒吗？',pin:'kěyǐ bāng wǒ jiàoxǐng ma?',jp:'モーニングコールをお願いできますか？'},
+    {ch:'可以多给我一条毛巾吗？',pin:'kěyǐ duō gěi wǒ yì tiáo máojīn ma?',jp:'タオルをもう一枚もらえますか？'},
+    {ch:'无线网络的密码是多少？',pin:'wúxiàn wǎngluò de mìmǎ shì duōshao?',jp:'Wi-Fiのパスワードは何ですか？'}
+  ],
+  'レストラン':[
+    {ch:'我要两个人的位子。',pin:'wǒ yào liǎng ge rén de wèizi.',jp:'2人席をお願いします。'},
+    {ch:'请给我看一下菜单。',pin:'qǐng gěi wǒ kàn yíxià càidān.',jp:'メニューを見せてください。'},
+    {ch:'有什么推荐的菜？',pin:'yǒu shénme tuījiàn de cài?',jp:'おすすめの料理は何ですか？'},
+    {ch:'不要太辣。',pin:'bú yào tài là.',jp:'あまり辛くしないでください。'},
+    {ch:'我对花生过敏。',pin:'wǒ duì huāshēng guòmǐn.',jp:'ピーナッツのアレルギーがあります。'},
+    {ch:'再来一瓶啤酒。',pin:'zài lái yì píng píjiǔ.',jp:'ビールをもう一本ください。'},
+    {ch:'很好吃！',pin:'hěn hǎochī!',jp:'とても美味しいです！'},
+    {ch:'买单。',pin:'mǎidān.',jp:'お会計お願いします。'}
+  ],
+  '買い物':[
+    {ch:'这个多少钱？',pin:'zhège duōshao qián?',jp:'これはいくらですか？'},
+    {ch:'太贵了，能便宜一点吗？',pin:'tài guì le, néng piányi yìdiǎn ma?',jp:'高いです、少し安くなりますか？'},
+    {ch:'可以试穿吗？',pin:'kěyǐ shìchuān ma?',jp:'試着できますか？'},
+    {ch:'有大一点的吗？',pin:'yǒu dà yìdiǎn de ma?',jp:'もう少し大きいのはありますか？'},
+    {ch:'有别的颜色吗？',pin:'yǒu biéde yánsè ma?',jp:'別の色はありますか？'},
+    {ch:'我就看看。',pin:'wǒ jiù kànkan.',jp:'見ているだけです。'},
+    {ch:'可以刷卡吗？',pin:'kěyǐ shuākǎ ma?',jp:'カードは使えますか？'},
+    {ch:'请给我开发票。',pin:'qǐng gěi wǒ kāi fāpiào.',jp:'領収書をください。'}
+  ],
+  '交通':[
+    {ch:'我要去这个地方。',pin:'wǒ yào qù zhège dìfang.',jp:'ここへ行きたいです。'},
+    {ch:'到这儿大概多少钱？',pin:'dào zhèr dàgài duōshao qián?',jp:'ここまでだいたいいくらですか？'},
+    {ch:'请打表。',pin:'qǐng dǎbiǎo.',jp:'メーターを使ってください。'},
+    {ch:'请在这儿停。',pin:'qǐng zài zhèr tíng.',jp:'ここで停めてください。'},
+    {ch:'去机场坐几号线？',pin:'qù jīchǎng zuò jǐ hào xiàn?',jp:'空港へは何号線ですか？'},
+    {ch:'下一站是哪儿？',pin:'xià yí zhàn shì nǎr?',jp:'次の駅はどこですか？'},
+    {ch:'请问这趟车去不去市中心？',pin:'qǐngwèn zhè tàng chē qù bu qù shìzhōngxīn?',jp:'この電車は中心街へ行きますか？'}
+  ],
+  '観光':[
+    {ch:'门票多少钱？',pin:'ménpiào duōshao qián?',jp:'入場券はいくらですか？'},
+    {ch:'几点开门？',pin:'jǐ diǎn kāimén?',jp:'何時に開きますか？'},
+    {ch:'可以拍照吗？',pin:'kěyǐ pāizhào ma?',jp:'写真を撮ってもいいですか？'},
+    {ch:'能帮我拍张照吗？',pin:'néng bāng wǒ pāi zhāng zhào ma?',jp:'写真を撮ってもらえますか？'},
+    {ch:'洗手间在哪里？',pin:'xǐshǒujiān zài nǎlǐ?',jp:'トイレはどこですか？'},
+    {ch:'有没有中文的导览图？',pin:'yǒu méiyǒu zhōngwén de dǎolǎntú?',jp:'中国語の案内図はありますか？'},
+    {ch:'这附近有什么好玩的？',pin:'zhè fùjìn yǒu shénme hǎowán de?',jp:'この近くにおすすめの場所はありますか？'}
+  ],
+  'トラブル':[
+    {ch:'救命！',pin:'jiùmìng!',jp:'助けて！'},
+    {ch:'我迷路了。',pin:'wǒ mílù le.',jp:'道に迷いました。'},
+    {ch:'我的钱包被偷了。',pin:'wǒ de qiánbāo bèi tōu le.',jp:'財布を盗まれました。'},
+    {ch:'请帮我叫警察。',pin:'qǐng bāng wǒ jiào jǐngchá.',jp:'警察を呼んでください。'},
+    {ch:'我身体不舒服。',pin:'wǒ shēntǐ bù shūfu.',jp:'体調が悪いです。'},
+    {ch:'请帮我叫救护车。',pin:'qǐng bāng wǒ jiào jiùhùchē.',jp:'救急車を呼んでください。'},
+    {ch:'附近有医院吗？',pin:'fùjìn yǒu yīyuàn ma?',jp:'近くに病院はありますか？'},
+    {ch:'我听不懂，请说慢一点。',pin:'wǒ tīng bu dǒng, qǐng shuō màn yìdiǎn.',jp:'聞き取れません、ゆっくり話してください。'}
+  ]
+};
+const sceneCatWrap=document.getElementById('scene-cats');
+const sceneList=document.getElementById('scene-list');
+let curScene=Object.keys(scenes)[0];
+function buildSceneCats(){
+  sceneCatWrap.innerHTML='';
+  Object.keys(scenes).forEach(c=>{
+    const b=document.createElement('button');
+    b.className='cat'+(c===curScene?' active':'');
+    b.textContent=c;
+    b.onclick=()=>{curScene=c;buildSceneCats();renderScenes();};
+    sceneCatWrap.appendChild(b);
+  });
+}
+function renderScenes(){
+  sceneList.innerHTML='';
+  scenes[curScene].forEach(p=>{
+    const d=document.createElement('div');d.className='ph';
+    d.innerHTML=`
+      <div class="ph-body">
+        <div class="ph-ch">${p.ch}</div>
+        <div class="ph-pin">${p.pin}</div>
+        <div class="ph-jp">${p.jp}</div>
+      </div>
+      <button class="spk" aria-label="発音">${SPK}</button>`;
+    d.querySelector('.spk').onclick=()=>speak(p.ch);
+    sceneList.appendChild(d);
+  });
+}
+buildSceneCats();
+renderScenes();
 
 /* ---------- クイズ ---------- */
 let allWords=[];
