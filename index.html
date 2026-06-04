@@ -207,6 +207,14 @@
   .ph-jp{font-size:13px;color:var(--ink-soft);margin-top:2px;}
 
   /* Quiz */
+  .qmenu{display:grid;gap:12px;margin-top:8px;}
+  .qmode{display:flex;align-items:center;gap:14px;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:16px 18px;font-family:inherit;cursor:pointer;color:var(--ink);box-shadow:0 2px 0 var(--line);transition:.16s;}
+  .qmode:hover{border-color:var(--vermillion);transform:translateY(-1px);}
+  .qmode:disabled{opacity:.45;cursor:default;transform:none;}
+  .qmode .qm-ico{font-size:26px;line-height:1;width:34px;text-align:center;flex:none;}
+  .qmode .qm-txt{flex:1;min-width:0;}
+  .qmode .qm-ttl{font-weight:700;font-size:16px;}
+  .qmode .qm-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
   .quiz-box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 20px;box-shadow:0 2px 0 var(--line);text-align:center;}
   .q-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);margin-bottom:18px;font-weight:700;letter-spacing:.05em;}
   .q-prompt{font-size:14px;color:var(--ink-soft);margin-bottom:6px;}
@@ -359,7 +367,7 @@
 
   <!-- QUIZ -->
   <section id="quiz">
-    <p class="lead">いろいろな形式の4択クイズ（意味・漢字・ピンイン・リスニング）。全10問です。</p>
+    <p class="lead">クイズの形式を選んでスタート。各10問です。</p>
     <div id="quiz-area"></div>
   </section>
 
@@ -742,7 +750,7 @@ function go(sec){
   document.querySelectorAll('section').forEach(s=>s.classList.toggle('show',s.id===sec));
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.sec===sec));
   window.scrollTo({top:0,behavior:'smooth'});
-  if(sec==='quiz')startQuiz();
+  if(sec==='quiz')renderQuizMenu();
   if(sec==='vocab'){buildCats();renderCards();}
 }
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>go(t.dataset.sec)));
@@ -757,7 +765,7 @@ function setLevel(lv){
   document.querySelectorAll('.lv').forEach(b=>b.classList.toggle('active',b.dataset.lv===lv));
   const h=document.getElementById('lv-hint');if(h)h.textContent=LEVEL_HINT[lv];
   buildCats();renderCards();renderPhrases();
-  if(document.getElementById('quiz').classList.contains('show'))startQuiz();
+  if(document.getElementById('quiz').classList.contains('show'))renderQuizMenu();
 }
 document.querySelectorAll('.lv').forEach(b=>b.addEventListener('click',()=>setLevel(b.dataset.lv)));
 (function(){
@@ -1068,7 +1076,7 @@ silentToggle.onclick=()=>{
   try{localStorage.setItem('zh-silent',silent?'1':'0');}catch(e){}
   if(silent&&window.speechSynthesis)speechSynthesis.cancel();
   renderSilent();
-  if(document.getElementById('quiz').classList.contains('show'))startQuiz();
+  if(document.getElementById('quiz').classList.contains('show'))renderQuizMenu();
 };
 renderSilent();
 
@@ -1084,14 +1092,48 @@ function distractors(field,correctVal,n){
   for(const x of shuffle(allWords)){if(out.length>=n)break;if(seen[x[field]])continue;seen[x[field]]=1;out.push(x);}
   return out;
 }
-function startQuiz(){
+let quizMode='mix';
+const QMODES=[
+  {id:'mix',ico:'🎲',ttl:'おまかせ',sub:'全形式ミックス（10問）'},
+  {id:'ch2jp',ico:'🀄',ttl:'中国語 → 意味',sub:'漢字を見て意味を選ぶ'},
+  {id:'jp2ch',ico:'🈁',ttl:'意味 → 中国語',sub:'意味を見て漢字を選ぶ'},
+  {id:'ch2pin',ico:'🗣️',ttl:'中国語 → ピンイン',sub:'漢字の読みを選ぶ'},
+  {id:'listen',ico:'🔊',ttl:'リスニング',sub:'音声を聞いて選ぶ'},
+  {id:'order',ico:'🔀',ttl:'並べ替え',sub:'語句を正しい順に並べる'}
+];
+function renderQuizMenu(){
   refreshWords();
-  const types=silent?QTYPES.filter(t=>t!=='listen'):QTYPES;
-  const bld=shuffle(curBuilders());
-  const nOrder=Math.min(bld.length,3);
+  const hasOrder=curBuilders().length>0;
+  const btns=QMODES.map(o=>{
+    let disabled=false,note=o.sub;
+    if(o.id==='listen'&&silent){disabled=true;note='サイレント中は使えません';}
+    if(o.id==='order'&&!hasOrder){disabled=true;note='このレベルには例文がありません';}
+    return `<button class="qmode" ${disabled?'disabled':''} onclick="startQuiz('${o.id}')">
+      <span class="qm-ico">${o.ico}</span>
+      <span class="qm-txt"><span class="qm-ttl">${o.ttl}</span><span class="qm-sub">${note}</span></span></button>`;
+  }).join('');
+  document.getElementById('quiz-area').innerHTML=`<div class="qmenu">${btns}</div>`;
+}
+function startQuiz(mode){
+  refreshWords();
+  if(mode)quizMode=mode;
+  const m=quizMode;
   const items=[];
-  for(let i=0;i<nOrder;i++)items.push({type:'order',b:bld[i]});
-  shuffle(allWords).slice(0,10-nOrder).forEach(w=>items.push({type:types[Math.floor(Math.random()*types.length)],w}));
+  if(m==='order'){
+    const bld=shuffle(curBuilders());
+    if(!bld.length)return renderQuizMenu();
+    while(items.length<10)for(const b of bld){if(items.length>=10)break;items.push({type:'order',b});}
+  }else if(m==='mix'){
+    const types=silent?QTYPES.filter(t=>t!=='listen'):QTYPES;
+    const bld=shuffle(curBuilders());
+    const nOrder=Math.min(bld.length,3);
+    for(let i=0;i<nOrder;i++)items.push({type:'order',b:bld[i]});
+    shuffle(allWords).slice(0,10-nOrder).forEach(w=>items.push({type:types[Math.floor(Math.random()*types.length)],w}));
+  }else{
+    let type=m;
+    if(type==='listen'&&silent)type='ch2jp';
+    shuffle(allWords).slice(0,10).forEach(w=>items.push({type,w}));
+  }
   qSet=shuffle(items);qIdx=0;qScore=0;renderQ();
 }
 function renderQ(){
@@ -1105,7 +1147,8 @@ function renderQ(){
     area.innerHTML=`<div class="quiz-box result">
       <div class="score">${qScore}<span style="font-size:24px;color:var(--ink-soft)">/10</span></div>
       <div class="msg">${msg}</div>
-      <button class="q-next show" onclick="startQuiz()">もう一度</button></div>`;
+      <button class="q-next show" onclick="startQuiz()">もう一度</button>
+      <button class="q-next show" style="background:var(--card);color:var(--ink);border:1px solid var(--line);margin-left:8px" onclick="renderQuizMenu()">形式を選ぶ</button></div>`;
     return;
   }
   if(qSet[qIdx].type==='order'){return renderOrder(area,qSet[qIdx].b);}
