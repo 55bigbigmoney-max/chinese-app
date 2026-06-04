@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>はじめての中国語</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f3ebdd;
+    --paper-deep:#e9dec9;
+    --ink:#26211c;
+    --ink-soft:#574e44;
+    --vermillion:#c8463a;
+    --vermillion-deep:#a8392f;
+    --gold:#b08d4c;
+    --jade:#4e7d6e;
+    --line:rgba(38,33,28,.14);
+    --card:#fbf6ec;
+    --shadow:rgba(38,33,28,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:"Zen Kaku Gothic New",sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 18% 12%, rgba(200,70,58,.06), transparent 42%),
+      radial-gradient(circle at 84% 88%, rgba(78,125,110,.06), transparent 45%),
+      var(--paper);
+    background-attachment:fixed;
+    line-height:1.7;
+    min-height:100vh;
+    position:relative;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;z-index:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 18px 120px;position:relative;z-index:1;}
+
+  /* Header */
+  header{padding:34px 0 18px;text-align:center;}
+  .seal{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:58px;height:58px;border-radius:10px;
+    background:var(--vermillion);color:#fff5e9;
+    font-family:"Noto Serif SC",serif;font-weight:900;font-size:30px;
+    box-shadow:0 6px 18px rgba(168,57,47,.35);
+    transform:rotate(-3deg);margin-bottom:14px;letter-spacing:-2px;
+  }
+  h1{font-family:"Shippori Mincho",serif;font-weight:700;font-size:26px;letter-spacing:.04em;}
+  .sub{color:var(--ink-soft);font-size:13px;margin-top:4px;letter-spacing:.08em;}
+
+  /* Tabs */
+  nav{
+    position:sticky;top:0;z-index:20;margin:18px -18px 26px;padding:10px 14px;
+    background:rgba(243,235,221,.86);backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
+  }
+  nav::-webkit-scrollbar{display:none;}
+  .tab{
+    flex:0 0 auto;border:none;background:transparent;cursor:pointer;
+    font-family:"Zen Kaku Gothic New",sans-serif;font-weight:700;font-size:14px;
+    color:var(--ink-soft);padding:8px 14px;border-radius:20px;transition:.25s;white-space:nowrap;
+  }
+  .tab .cn{font-family:"Noto Serif SC",serif;margin-right:5px;color:var(--vermillion);}
+  .tab.active{background:var(--ink);color:var(--paper);}
+  .tab.active .cn{color:var(--gold);}
+
+  section{display:none;animation:fade .4s ease;}
+  section.show{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .lead{font-size:14px;color:var(--ink-soft);margin-bottom:20px;border-left:3px solid var(--vermillion);padding-left:12px;}
+  h2{font-family:"Shippori Mincho",serif;font-size:19px;margin:30px 0 14px;display:flex;align-items:center;gap:8px;}
+  h2 .cn{font-family:"Noto Serif SC",serif;color:var(--vermillion);font-weight:700;}
+
+  /* Speak button */
+  .spk{
+    border:1px solid var(--line);background:var(--card);cursor:pointer;
+    width:38px;height:38px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+    color:var(--vermillion);transition:.2s;flex:0 0 auto;
+  }
+  .spk:hover{background:var(--vermillion);color:#fff;transform:scale(1.06);}
+  .spk:active{transform:scale(.92);}
+  .spk svg{width:18px;height:18px;}
+
+  /* Home */
+  .menu{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;}
+  .menu button{
+    text-align:left;border:1px solid var(--line);background:var(--card);border-radius:16px;
+    padding:18px 16px;cursor:pointer;transition:.2s;font-family:inherit;color:var(--ink);
+    box-shadow:0 2px 0 var(--line);
+  }
+  .menu button:hover{transform:translateY(-3px);box-shadow:0 8px 20px var(--shadow);}
+  .menu .big{font-family:"Noto Serif SC",serif;font-size:30px;font-weight:700;color:var(--vermillion);display:block;}
+  .menu .ttl{font-weight:700;font-size:15px;margin-top:6px;}
+  .menu .dsc{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .tip{margin-top:24px;background:var(--paper-deep);border-radius:14px;padding:16px 18px;font-size:13px;color:var(--ink-soft);}
+  .tip b{color:var(--ink);}
+
+  /* Tones */
+  .tone-card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;
+    margin-bottom:12px;display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;
+    box-shadow:0 2px 0 var(--line);
+  }
+  .tone-svg{width:64px;height:48px;}
+  .tone-char{font-family:"Noto Serif SC",serif;font-size:38px;line-height:1;color:var(--ink);}
+  .tone-pin{font-size:20px;font-weight:700;color:var(--vermillion);margin-top:2px;}
+  .tone-name{font-size:13px;color:var(--ink-soft);margin-top:4px;}
+  .tone-mean{font-size:12px;color:var(--ink-soft);}
+
+  /* Vocab */
+  .cats{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px;}
+  .cat{border:1px solid var(--line);background:var(--card);border-radius:18px;padding:6px 13px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink-soft);transition:.2s;font-family:inherit;}
+  .cat.active{background:var(--jade);color:#fff;border-color:var(--jade);}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .flip{perspective:900px;height:140px;cursor:pointer;}
+  .flip-in{position:relative;width:100%;height:100%;transition:transform .55s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d;}
+  .flip.flipped .flip-in{transform:rotateY(180deg);}
+  .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:1px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;box-shadow:0 2px 0 var(--line);}
+  .front{background:var(--card);}
+  .front .ch{font-family:"Noto Serif SC",serif;font-size:42px;font-weight:700;line-height:1;}
+  .front .pin{font-size:15px;color:var(--vermillion);font-weight:700;margin-top:8px;}
+  .front .hint{position:absolute;bottom:8px;font-size:10px;color:var(--ink-soft);letter-spacing:.1em;}
+  .back{background:var(--ink);color:var(--paper);transform:rotateY(180deg);text-align:center;}
+  .back .jp{font-size:17px;font-weight:700;}
+  .back .pin2{font-size:13px;color:var(--gold);margin-top:6px;}
+  .back .spk{position:absolute;bottom:10px;right:10px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:var(--paper);}
+  .back .spk:hover{background:var(--vermillion);}
+
+  /* Phrases */
+  .ph{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 0 var(--line);}
+  .ph-body{flex:1;min-width:0;}
+  .ph-ch{font-family:"Noto Serif SC",serif;font-size:23px;font-weight:600;}
+  .ph-pin{font-size:13px;color:var(--vermillion);}
+  .ph-jp{font-size:13px;color:var(--ink-soft);margin-top:2px;}
+
+  /* Quiz */
+  .quiz-box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 20px;box-shadow:0 2px 0 var(--line);text-align:center;}
+  .q-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);margin-bottom:18px;font-weight:700;letter-spacing:.05em;}
+  .q-prompt{font-size:14px;color:var(--ink-soft);margin-bottom:6px;}
+  .q-main{font-size:30px;font-weight:700;margin-bottom:6px;}
+  .q-main.cn{font-family:"Noto Serif SC",serif;}
+  .q-opts{display:grid;gap:10px;margin-top:22px;}
+  .opt{border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:14px;font-size:17px;cursor:pointer;font-family:inherit;transition:.18s;color:var(--ink);}
+  .opt .ocn{font-family:"Noto Serif SC",serif;}
+  .opt:hover{border-color:var(--vermillion);}
+  .opt.correct{background:var(--jade);color:#fff;border-color:var(--jade);}
+  .opt.wrong{background:var(--vermillion);color:#fff;border-color:var(--vermillion);}
+  .opt:disabled{cursor:default;}
+  .q-next{margin-top:18px;border:none;background:var(--ink);color:var(--paper);border-radius:24px;padding:12px 28px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;display:none;}
+  .q-next.show{display:inline-block;}
+  .bar{height:6px;background:var(--paper-deep);border-radius:4px;overflow:hidden;margin-bottom:18px;}
+  .bar i{display:block;height:100%;background:var(--vermillion);transition:width .4s;}
+  .result{text-align:center;}
+  .result .score{font-family:"Noto Serif SC",serif;font-size:54px;font-weight:900;color:var(--vermillion);}
+  .result .msg{font-size:15px;margin:8px 0 20px;}
+
+  footer{text-align:center;font-size:11px;color:var(--ink-soft);padding-top:24px;letter-spacing:.08em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="seal">中</div>
+    <h1>はじめての中国語</h1>
+    <div class="sub">PINYIN · 単語 · フレーズ · クイズ</div>
+  </header>
+
+  <nav id="nav">
+    <button class="tab active" data-sec="home"><span class="cn">家</span>ホーム</button>
+    <button class="tab" data-sec="tone"><span class="cn">声</span>声調</button>
+    <button class="tab" data-sec="vocab"><span class="cn">词</span>単語</button>
+    <button class="tab" data-sec="phrase"><span class="cn">话</span>フレーズ</button>
+    <button class="tab" data-sec="quiz"><span class="cn">考</span>クイズ</button>
+  </nav>
+
+  <!-- HOME -->
+  <section id="home" class="show">
+    <p class="lead">中国語学習の最初の一歩へようこそ。発音（声調）・基本単語・日常フレーズを、音声付きで学べます。各カードの 🔊 を押すと中国語の発音が流れます。</p>
+    <div class="menu">
+      <button onclick="go('tone')"><span class="big">声调</span><span class="ttl">声調を学ぶ</span><span class="dsc">4つの音の高低</span></button>
+      <button onclick="go('vocab')"><span class="big">单词</span><span class="ttl">単語カード</span><span class="dsc">めくって暗記</span></button>
+      <button onclick="go('phrase')"><span class="big">会话</span><span class="ttl">フレーズ集</span><span class="dsc">そのまま使える</span></button>
+      <button onclick="go('quiz')"><span class="big">测验</span><span class="ttl">クイズ</span><span class="dsc">4択で確認</span></button>
+    </div>
+    <div class="tip">
+      <b>声調（せいちょう）とは？</b><br>
+      中国語は同じ「ma」でも音の高さの動きで意味が変わります。まずは「声調」タブで4つの音を耳で覚えるのがおすすめです。
+    </div>
+    <div class="tip" id="audio-note" style="display:none;">
+      <b>音声について：</b> お使いの端末・ブラウザに中国語の音声が入っていない場合、読み上げが動作しないことがあります。その際はスマホの設定で中国語(简体)の音声を追加すると改善します。
+    </div>
+  </section>
+
+  <!-- TONE -->
+  <section id="tone">
+    <p class="lead">「ma」を例に、4つの声調＋軽声を聴き比べましょう。線は音の高さの動きを表します。</p>
+    <div id="tone-list"></div>
+  </section>
+
+  <!-- VOCAB -->
+  <section id="vocab">
+    <p class="lead">カードをタップすると意味が出ます。🔊 で発音を確認。カテゴリを選んで練習しましょう。</p>
+    <div class="cats" id="cats"></div>
+    <div class="grid" id="cards"></div>
+  </section>
+
+  <!-- PHRASE -->
+  <section id="phrase">
+    <p class="lead">あいさつや会話で役立つ基本フレーズ。🔊 を押して声に出して練習してみましょう。</p>
+    <div id="phrase-list"></div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz">
+    <p class="lead">単語・フレーズの意味を4択で確認。全10問です。</p>
+    <div id="quiz-area"></div>
+  </section>
+
+  <footer>声に出して、耳で覚える。加油！(jiāyóu／がんばって)</footer>
+</div>
+
+<script>
+/* ---------- 音声合成 ---------- */
+let zhVoice=null;
+function pickVoice(){
+  const vs=window.speechSynthesis?speechSynthesis.getVoices():[];
+  zhVoice=vs.find(v=>v.lang==='zh-CN')||vs.find(v=>v.lang&&v.lang.toLowerCase().startsWith('zh'))||null;
+  if(window.speechSynthesis && vs.length && !zhVoice){
+    document.getElementById('audio-note').style.display='block';
+  }
+}
+if(window.speechSynthesis){
+  speechSynthesis.onvoiceschanged=pickVoice; pickVoice();
+}
+function speak(text){
+  if(!window.speechSynthesis){return;}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='zh-CN'; if(zhVoice)u.voice=zhVoice; u.rate=.82; u.pitch=1;
+  speechSynthesis.speak(u);
+}
+const SPK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+
+/* ---------- データ ---------- */
+const tones=[
+  {ch:'妈',pin:'mā',name:'第一声 ／ 高く平ら',mean:'お母さん',path:'M6 10 L58 10'},
+  {ch:'麻',pin:'má',name:'第二声 ／ 上がる',mean:'麻・しびれる',path:'M6 40 L58 8'},
+  {ch:'马',pin:'mǎ',name:'第三声 ／ 下がって上がる',mean:'馬',path:'M6 18 Q20 44 32 40 Q46 36 58 12'},
+  {ch:'骂',pin:'mà',name:'第四声 ／ 急に下がる',mean:'ののしる',path:'M6 8 L58 42'},
+  {ch:'吗',pin:'ma',name:'軽声 ／ 軽く短く',mean:'〜か？(疑問)',path:'M28 24 L36 24'}
+];
+
+const vocab={
+  '数字':[
+    {ch:'一',pin:'yī',jp:'1'},{ch:'二',pin:'èr',jp:'2'},{ch:'三',pin:'sān',jp:'3'},
+    {ch:'四',pin:'sì',jp:'4'},{ch:'五',pin:'wǔ',jp:'5'},{ch:'六',pin:'liù',jp:'6'},
+    {ch:'七',pin:'qī',jp:'7'},{ch:'八',pin:'bā',jp:'8'},{ch:'九',pin:'jiǔ',jp:'9'},{ch:'十',pin:'shí',jp:'10'}
+  ],
+  'あいさつ':[
+    {ch:'你好',pin:'nǐ hǎo',jp:'こんにちは'},{ch:'谢谢',pin:'xièxie',jp:'ありがとう'},
+    {ch:'再见',pin:'zàijiàn',jp:'さようなら'},{ch:'对不起',pin:'duìbuqǐ',jp:'ごめんなさい'},
+    {ch:'不客气',pin:'bú kèqi',jp:'どういたしまして'},{ch:'没关系',pin:'méi guānxi',jp:'大丈夫です'},
+    {ch:'是',pin:'shì',jp:'はい／〜です'},{ch:'不',pin:'bù',jp:'いいえ／〜ない'}
+  ],
+  '人称':[
+    {ch:'我',pin:'wǒ',jp:'私'},{ch:'你',pin:'nǐ',jp:'あなた'},{ch:'他',pin:'tā',jp:'彼'},
+    {ch:'她',pin:'tā',jp:'彼女'},{ch:'我们',pin:'wǒmen',jp:'私たち'},{ch:'他们',pin:'tāmen',jp:'彼ら'}
+  ],
+  '動詞':[
+    {ch:'吃',pin:'chī',jp:'食べる'},{ch:'喝',pin:'hē',jp:'飲む'},{ch:'去',pin:'qù',jp:'行く'},
+    {ch:'来',pin:'lái',jp:'来る'},{ch:'看',pin:'kàn',jp:'見る'},{ch:'说',pin:'shuō',jp:'話す'},
+    {ch:'有',pin:'yǒu',jp:'ある／持つ'},{ch:'要',pin:'yào',jp:'要る／欲しい'}
+  ],
+  '形容詞':[
+    {ch:'好',pin:'hǎo',jp:'良い'},{ch:'大',pin:'dà',jp:'大きい'},{ch:'小',pin:'xiǎo',jp:'小さい'},
+    {ch:'多',pin:'duō',jp:'多い'},{ch:'少',pin:'shǎo',jp:'少ない'},{ch:'贵',pin:'guì',jp:'(値段が)高い'}
+  ],
+  '食べ物':[
+    {ch:'水',pin:'shuǐ',jp:'水'},{ch:'茶',pin:'chá',jp:'お茶'},{ch:'米饭',pin:'mǐfàn',jp:'ご飯'},
+    {ch:'面条',pin:'miàntiáo',jp:'麺'},{ch:'菜',pin:'cài',jp:'料理／野菜'},{ch:'啤酒',pin:'píjiǔ',jp:'ビール'}
+  ]
+};
+
+const phrases=[
+  {ch:'你好！',pin:'nǐ hǎo!',jp:'こんにちは！'},
+  {ch:'你好吗？',pin:'nǐ hǎo ma?',jp:'お元気ですか？'},
+  {ch:'我很好。',pin:'wǒ hěn hǎo.',jp:'元気です。'},
+  {ch:'谢谢你。',pin:'xièxie nǐ.',jp:'ありがとう。'},
+  {ch:'不客气。',pin:'bú kèqi.',jp:'どういたしまして。'},
+  {ch:'对不起。',pin:'duìbuqǐ.',jp:'ごめんなさい。'},
+  {ch:'没关系。',pin:'méi guānxi.',jp:'大丈夫です。'},
+  {ch:'我叫田中。',pin:'wǒ jiào Tiánzhōng.',jp:'私は田中といいます。'},
+  {ch:'你叫什么名字？',pin:'nǐ jiào shénme míngzi?',jp:'お名前は何ですか？'},
+  {ch:'很高兴认识你。',pin:'hěn gāoxìng rènshi nǐ.',jp:'お会いできて嬉しいです。'},
+  {ch:'这个多少钱？',pin:'zhège duōshao qián?',jp:'これはいくらですか？'},
+  {ch:'我听不懂。',pin:'wǒ tīng bu dǒng.',jp:'聞き取れません。'},
+  {ch:'请再说一遍。',pin:'qǐng zài shuō yí biàn.',jp:'もう一度言ってください。'},
+  {ch:'再见！',pin:'zàijiàn!',jp:'さようなら！'}
+];
+
+/* ---------- タブ切替 ---------- */
+function go(sec){
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('show',s.id===sec));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.sec===sec));
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(sec==='quiz')startQuiz();
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>go(t.dataset.sec)));
+
+/* ---------- 声調 ---------- */
+const tl=document.getElementById('tone-list');
+tones.forEach(t=>{
+  const d=document.createElement('div');d.className='tone-card';
+  d.innerHTML=`
+    <svg class="tone-svg" viewBox="0 0 64 48">
+      <line x1="6" y1="10" x2="58" y2="10" stroke="rgba(38,33,28,.12)"/>
+      <line x1="6" y1="40" x2="58" y2="40" stroke="rgba(38,33,28,.12)"/>
+      <path d="${t.path}" fill="none" stroke="var(--vermillion)" stroke-width="3.5" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="tone-char">${t.ch}</div>
+      <div class="tone-pin">${t.pin}</div>
+      <div class="tone-name">${t.name}</div>
+      <div class="tone-mean">意味：${t.mean}</div>
+    </div>
+    <button class="spk" aria-label="発音">${SPK}</button>`;
+  d.querySelector('.spk').onclick=()=>speak(t.ch);
+  tl.appendChild(d);
+});
+
+/* ---------- 単語 ---------- */
+const catWrap=document.getElementById('cats');
+const cardWrap=document.getElementById('cards');
+let curCat=Object.keys(vocab)[0];
+Object.keys(vocab).forEach(c=>{
+  const b=document.createElement('button');b.className='cat'+(c===curCat?' active':'');b.textContent=c;
+  b.onclick=()=>{curCat=c;document.querySelectorAll('.cat').forEach(x=>x.classList.toggle('active',x.textContent===c));renderCards();};
+  catWrap.appendChild(b);
+});
+function renderCards(){
+  cardWrap.innerHTML='';
+  vocab[curCat].forEach(w=>{
+    const f=document.createElement('div');f.className='flip';
+    f.innerHTML=`
+      <div class="flip-in">
+        <div class="face front"><div class="ch">${w.ch}</div><div class="pin">${w.pin}</div><div class="hint">TAP</div></div>
+        <div class="face back"><div class="jp">${w.jp}</div><div class="pin2">${w.pin}</div>
+          <button class="spk" aria-label="発音">${SPK}</button></div>
+      </div>`;
+    f.addEventListener('click',e=>{ if(e.target.closest('.spk'))return; f.classList.toggle('flipped'); });
+    f.querySelector('.spk').onclick=e=>{e.stopPropagation();speak(w.ch);};
+    cardWrap.appendChild(f);
+  });
+}
+renderCards();
+
+/* ---------- フレーズ ---------- */
+const pl=document.getElementById('phrase-list');
+phrases.forEach(p=>{
+  const d=document.createElement('div');d.className='ph';
+  d.innerHTML=`
+    <div class="ph-body">
+      <div class="ph-ch">${p.ch}</div>
+      <div class="ph-pin">${p.pin}</div>
+      <div class="ph-jp">${p.jp}</div>
+    </div>
+    <button class="spk" aria-label="発音">${SPK}</button>`;
+  d.querySelector('.spk').onclick=()=>speak(p.ch);
+  pl.appendChild(d);
+});
+
+/* ---------- クイズ ---------- */
+const allWords=[];Object.values(vocab).forEach(a=>a.forEach(w=>allWords.push(w)));
+let qSet=[],qIdx=0,qScore=0;
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startQuiz(){
+  qSet=shuffle(allWords).slice(0,10);qIdx=0;qScore=0;renderQ();
+}
+function renderQ(){
+  const area=document.getElementById('quiz-area');
+  if(qIdx>=qSet.length){
+    let msg='また挑戦してみましょう！';
+    if(qScore>=9)msg='完璧です！太棒了！(すばらしい)';
+    else if(qScore>=7)msg='その調子！よくできました。';
+    else if(qScore>=4)msg='いい感じ。復習でもっと伸びます。';
+    area.innerHTML=`<div class="quiz-box result">
+      <div class="score">${qScore}<span style="font-size:24px;color:var(--ink-soft)">/10</span></div>
+      <div class="msg">${msg}</div>
+      <button class="q-next show" onclick="startQuiz()">もう一度</button></div>`;
+    return;
+  }
+  const w=qSet[qIdx];
+  const wrong=shuffle(allWords.filter(x=>x.jp!==w.jp)).slice(0,3);
+  const opts=shuffle([w,...wrong]);
+  area.innerHTML=`<div class="quiz-box">
+    <div class="bar"><i style="width:${qIdx/qSet.length*100}%"></i></div>
+    <div class="q-meta"><span>第 ${qIdx+1} 問 / 10</span><span>正解 ${qScore}</span></div>
+    <div class="q-prompt">この単語の意味は？</div>
+    <div class="q-main cn">${w.ch}</div>
+    <div class="ph-pin" style="text-align:center">${w.pin}
+      <button class="spk" style="vertical-align:middle;width:30px;height:30px;margin-left:6px" aria-label="発音">${SPK}</button></div>
+    <div class="q-opts"></div>
+    <button class="q-next" id="qnext">次へ →</button>
+  </div>`;
+  area.querySelector('.spk').onclick=()=>speak(w.ch);
+  const ow=area.querySelector('.q-opts');
+  opts.forEach(o=>{
+    const b=document.createElement('button');b.className='opt';b.textContent=o.jp;
+    b.onclick=()=>{
+      const all=ow.querySelectorAll('.opt');all.forEach(x=>x.disabled=true);
+      if(o.jp===w.jp){b.classList.add('correct');qScore++;}
+      else{b.classList.add('wrong');all.forEach(x=>{if(x.textContent===w.jp)x.classList.add('correct');});}
+      speak(w.ch);
+      area.querySelector('#qnext').classList.add('show');
+      area.querySelector('.q-meta').children[1].textContent='正解 '+qScore;
+    };
+    ow.appendChild(b);
+  });
+  area.querySelector('#qnext').onclick=()=>{qIdx++;renderQ();};
+}
+</script>
+</body>
+</html>
