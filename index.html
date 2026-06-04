@@ -260,6 +260,14 @@
   .result{text-align:center;}
   .result .score{font-family:"Noto Serif SC",serif;font-size:54px;font-weight:900;color:var(--vermillion);}
   .result .msg{font-size:15px;margin:8px 0 20px;}
+  .exam-grade{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:700;font-size:15px;color:var(--ink-soft);margin-bottom:4px;}
+  .exam-pct{font-size:15px;color:var(--ink-soft);margin-top:2px;}
+  .exam-judge{display:inline-block;margin:14px 0 4px;padding:8px 24px;border-radius:999px;font-weight:800;font-size:22px;letter-spacing:.05em;}
+  .exam-judge.pass{background:var(--jade);color:#fff;}
+  .exam-judge.near{background:#d98a2b;color:#fff;}
+  .exam-judge.fail{background:var(--vermillion);color:#fff;}
+  .exam-best{margin-top:14px;text-align:center;font-size:13px;color:var(--ink-soft);}
+  .exam-best b{color:var(--vermillion);font-size:16px;}
 
   footer{text-align:center;font-size:11px;color:var(--ink-soft);padding-top:24px;letter-spacing:.08em;}
 </style>
@@ -290,6 +298,7 @@
     <button class="tab" data-sec="phrase"><span class="cn">话</span>フレーズ</button>
     <button class="tab" data-sec="scene"><span class="cn">境</span>場面別</button>
     <button class="tab" data-sec="quiz"><span class="cn">考</span>クイズ</button>
+    <button class="tab" data-sec="exam"><span class="cn">检</span>模擬検定</button>
   </nav>
 
   <!-- HOME -->
@@ -317,6 +326,10 @@
           <div class="st-val"><span id="st-qbest">0</span> <small>/ 10</small></div>
           <div class="st-lbl" style="margin-top:6px">挑戦 <span id="st-qcount">0</span> 回 ・ 学習 <span id="st-days">0</span> 日</div>
         </div>
+        <div class="stat" style="grid-column:1/-1">
+          <div class="st-lbl">模擬検定 最高</div>
+          <div class="st-val"><span id="st-ebest">—</span> <small id="st-elv" style="font-weight:400">まだ未受験</small></div>
+        </div>
       </div>
       <div class="badges">
         <div class="bg-ttl">獲得バッジ</div>
@@ -334,6 +347,7 @@
       <button onclick="go('phrase')"><span class="big">会话</span><span class="ttl">フレーズ集</span><span class="dsc">そのまま使える</span></button>
       <button onclick="go('scene')"><span class="big">场景</span><span class="ttl">場面別会話</span><span class="dsc">旅行・生活で使う</span></button>
       <button onclick="go('quiz')"><span class="big">测验</span><span class="ttl">クイズ</span><span class="dsc">4択で確認</span></button>
+      <button onclick="go('exam')"><span class="big">模拟</span><span class="ttl">模擬検定</span><span class="dsc">合格予想つき</span></button>
     </div>
     <div class="tip">
       <b>声調（せいちょう）とは？</b><br>
@@ -374,6 +388,12 @@
   <section id="quiz">
     <p class="lead">クイズの形式を選んでスタート。各10問です。</p>
     <div id="quiz-area"></div>
+  </section>
+
+  <!-- EXAM -->
+  <section id="exam">
+    <p class="lead">レベルを選んで模擬検定に挑戦。全20問・時間制限なし。終了後に合格予想を3段階で表示します。</p>
+    <div id="exam-area"></div>
   </section>
 
   <footer>声に出して、耳で覚える。加油！(jiāyóu／がんばって)</footer>
@@ -1177,6 +1197,7 @@ function go(sec){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.sec===sec));
   window.scrollTo({top:0,behavior:'smooth'});
   if(sec==='quiz')renderQuizMenu();
+  if(sec==='exam')renderExamMenu();
   if(sec==='vocab'){buildCats();renderCards();}
 }
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>go(t.dataset.sec)));
@@ -1234,7 +1255,7 @@ function favWords(){return favs.map(ch=>wordByCh[ch]).filter(Boolean);}
 
 /* ---------- 学習記録・進捗 ---------- */
 const PROG_KEY='zh-progress';
-let prog={lastDate:'',streak:0,best:0,days:0,learned:{},quizPlayed:0,quizBest:0};
+let prog={lastDate:'',streak:0,best:0,days:0,learned:{},quizPlayed:0,quizBest:0,examPlayed:0,examBest:0,examBestLevel:''};
 try{const p=JSON.parse(localStorage.getItem(PROG_KEY));if(p)prog=Object.assign(prog,p);}catch(e){}
 function saveProg(){try{localStorage.setItem(PROG_KEY,JSON.stringify(prog));}catch(e){}}
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -1251,6 +1272,7 @@ function markStudy(){
 }
 function learnWord(ch){if(ch&&wordByCh[ch]&&!prog.learned[ch]){prog.learned[ch]=true;saveProg();renderProgress();}}
 function recordQuiz(score){prog.quizPlayed++;if(score>prog.quizBest)prog.quizBest=score;saveProg();renderProgress();}
+function recordExam(pct,lv){prog.examPlayed++;if(pct>prog.examBest){prog.examBest=pct;prog.examBestLevel=lv;}saveProg();renderProgress();}
 const BADGES=[
   {ico:'🌱',name:'はじめの一歩',test:p=>p.days>=1},
   {ico:'🔥',name:'3日連続',test:p=>p.best>=3},
@@ -1271,6 +1293,8 @@ function renderProgress(){
   set('st-learned',learned);set('st-total',total);
   const bar=document.getElementById('st-bar');if(bar)bar.style.width=(total?Math.round(learned/total*100):0)+'%';
   set('st-qbest',prog.quizBest);set('st-qcount',prog.quizPlayed);set('st-days',prog.days);
+  set('st-ebest',prog.examBest>0?prog.examBest+'%':'—');
+  set('st-elv',prog.examBest>0?prog.examBestLevel+'（'+prog.examPlayed+'回受験）':'まだ未受験');
   const row=document.getElementById('badge-row');
   if(row){row.innerHTML='';BADGES.forEach(b=>{const on=b.test(prog);const el=document.createElement('div');el.className='badge'+(on?' on':'');el.innerHTML=`<span class="b-ico">${b.ico}</span>${b.name}`;row.appendChild(el);});}
 }
@@ -1513,6 +1537,8 @@ let allWords=[];
 function refreshWords(){allWords=[];Object.values(curVocab()).forEach(a=>a.forEach(w=>allWords.push(w)));}
 refreshWords();
 let qSet=[],qIdx=0,qScore=0;
+let qArea='quiz-area',examMode=false,examLevel='';
+const EXAM_N=20;
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 const QTYPES=['ch2jp','jp2ch','ch2pin','listen'];
 function distractors(field,correctVal,n){
@@ -1565,8 +1591,9 @@ function startQuiz(mode){
   qSet=shuffle(items);qIdx=0;qScore=0;renderQ();
 }
 function renderQ(){
-  const area=document.getElementById('quiz-area');
+  const area=document.getElementById(qArea);
   if(qIdx>=qSet.length){
+    if(examMode)return renderExamResult(area);
     recordQuiz(qScore);
     let msg='また挑戦してみましょう！';
     if(qScore>=9)msg='完璧です！太棒了！(すばらしい)';
@@ -1601,7 +1628,7 @@ function renderQ(){
   const opts=shuffle([w,...distractors(field,w[field],3)]);
   area.innerHTML=`<div class="quiz-box">
     <div class="bar"><i style="width:${qIdx/qSet.length*100}%"></i></div>
-    <div class="q-meta"><span>第 ${qIdx+1} 問 / 10</span><span>正解 ${qScore}</span></div>
+    <div class="q-meta"><span>第 ${qIdx+1} 問 / ${qSet.length}</span><span>正解 ${qScore}</span></div>
     <div class="q-prompt">${prompt}</div>
     ${mainHtml}
     <div class="q-opts${optCn?' cn':''}"></div>
@@ -1633,7 +1660,7 @@ function renderOrder(area,b){
   let done=false;
   area.innerHTML=`<div class="quiz-box">
     <div class="bar"><i style="width:${qIdx/qSet.length*100}%"></i></div>
-    <div class="q-meta"><span>第 ${qIdx+1} 問 / 10</span><span>正解 ${qScore}</span></div>
+    <div class="q-meta"><span>第 ${qIdx+1} 問 / ${qSet.length}</span><span>正解 ${qScore}</span></div>
     <div class="q-prompt">語句を正しい順に並べ替えよう</div>
     <div class="q-main q-jp" style="font-size:18px">${b.jp}</div>
     <div class="q-target cn" id="qtarget"></div>
@@ -1676,6 +1703,52 @@ function renderOrder(area,b){
     area.querySelector('#qnext').classList.add('show');
   };
   area.querySelector('#qnext').onclick=()=>{qIdx++;renderQ();};
+}
+
+/* ---------- 模擬検定 ---------- */
+function levelWords(lv){const out=[];Object.values(data[lv].vocab).forEach(a=>a.forEach(w=>out.push(w)));return out;}
+function levelBuilders(lv){return builders[lv]||[];}
+function renderExamMenu(){
+  const btns=LEVELS.map(lv=>`<button class="qmode" onclick="startExam('${lv}')">
+      <span class="qm-ico">📝</span>
+      <span class="qm-txt"><span class="qm-ttl">${lv}</span><span class="qm-sub">${LEVEL_HINT[lv]}</span></span></button>`).join('');
+  const best=prog.examBest>0?`<div class="exam-best">これまでの最高：<b>${prog.examBest}%</b>（${prog.examBestLevel}）</div>`:'';
+  document.getElementById('exam-area').innerHTML=`<div class="qmenu">${btns}</div>${best}`;
+}
+function startExam(lv){
+  if(!LEVELS.includes(lv))return;
+  examLevel=lv;examMode=true;qArea='exam-area';
+  allWords=levelWords(lv);
+  const words=shuffle(allWords);
+  const bld=shuffle(levelBuilders(lv));
+  const types=silent?QTYPES.filter(t=>t!=='listen'):QTYPES;
+  const items=[];
+  const nOrder=Math.min(bld.length,4);
+  for(let i=0;i<nOrder;i++)items.push({type:'order',b:bld[i]});
+  let wi=0;
+  while(items.length<EXAM_N){const w=words[wi%words.length];wi++;items.push({type:types[Math.floor(Math.random()*types.length)],w});}
+  qSet=shuffle(items).slice(0,EXAM_N);qIdx=0;qScore=0;
+  window.scrollTo({top:0,behavior:'smooth'});renderQ();
+}
+function renderExamResult(area){
+  const pct=Math.round(qScore/qSet.length*100);
+  recordExam(pct,examLevel);
+  let tier,cls,note;
+  if(pct>=80){tier='合格圏';cls='pass';note='この調子！本番でも力を発揮できそうです。';}
+  else if(pct>=60){tier='あと一歩';cls='near';note='合格まであと少し。間違えた範囲を復習しましょう。';}
+  else{tier='要復習';cls='fail';note='基礎固めのチャンス。単語とフレーズを見直しましょう。';}
+  const grade=LEVEL_HINT[examLevel].split(' — ')[0];
+  const lv=examLevel,sc=qScore,tot=qSet.length;
+  examMode=false;qArea='quiz-area';
+  area.innerHTML=`<div class="quiz-box result exam-result">
+    <div class="exam-grade">${lv}　${grade}</div>
+    <div class="score">${sc}<span style="font-size:24px;color:var(--ink-soft)">/${tot}</span></div>
+    <div class="exam-pct">正答率 ${pct}%</div>
+    <div class="exam-judge ${cls}">${tier}</div>
+    <div class="msg">${note}</div>
+    <button class="q-next show" onclick="renderExamMenu()">レベルを選ぶ</button>
+    <button class="q-next show" style="background:var(--card);color:var(--ink);border:1px solid var(--line);margin-left:8px" onclick="startExam('${lv}')">もう一度</button>
+  </div>`;
 }
 </script>
 </body>
