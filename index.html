@@ -204,6 +204,11 @@
   .q-main{font-size:30px;font-weight:700;margin-bottom:6px;}
   .q-main.cn{font-family:"Noto Serif SC",serif;}
   .q-opts{display:grid;gap:10px;margin-top:22px;}
+  .q-opts.cn .opt{font-family:"Noto Serif SC",serif;font-size:22px;}
+  .q-main.q-jp{font-family:"Zen Kaku Gothic New",sans-serif;font-size:24px;color:var(--vermillion-deep);}
+  .q-listen{margin:10px 0 4px;}
+  .q-play{display:inline-flex;align-items:center;gap:8px;background:var(--vermillion);color:#fff5e9;border:none;border-radius:999px;padding:14px 26px;font-family:inherit;font-weight:700;font-size:16px;cursor:pointer;box-shadow:0 6px 16px rgba(168,57,47,.3);}
+  .q-play svg{width:24px;height:24px;}
   .opt{border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:14px;font-size:17px;cursor:pointer;font-family:inherit;transition:.18s;color:var(--ink);}
   .opt .ocn{font-family:"Noto Serif SC",serif;}
   .opt:hover{border-color:var(--vermillion);}
@@ -325,7 +330,7 @@
 
   <!-- QUIZ -->
   <section id="quiz">
-    <p class="lead">単語・フレーズの意味を4択で確認。全10問です。</p>
+    <p class="lead">いろいろな形式の4択クイズ（意味・漢字・ピンイン・リスニング）。全10問です。</p>
     <div id="quiz-area"></div>
   </section>
 
@@ -985,9 +990,16 @@ function refreshWords(){allWords=[];Object.values(curVocab()).forEach(a=>a.forEa
 refreshWords();
 let qSet=[],qIdx=0,qScore=0;
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const QTYPES=['ch2jp','jp2ch','ch2pin','listen'];
+function distractors(field,correctVal,n){
+  const out=[],seen={};seen[correctVal]=1;
+  for(const x of shuffle(allWords)){if(out.length>=n)break;if(seen[x[field]])continue;seen[x[field]]=1;out.push(x);}
+  return out;
+}
 function startQuiz(){
   refreshWords();
-  qSet=shuffle(allWords).slice(0,10);qIdx=0;qScore=0;renderQ();
+  qSet=shuffle(allWords).slice(0,10).map(w=>({w,type:QTYPES[Math.floor(Math.random()*QTYPES.length)]}));
+  qIdx=0;qScore=0;renderQ();
 }
 function renderQ(){
   const area=document.getElementById('quiz-area');
@@ -1003,28 +1015,44 @@ function renderQ(){
       <button class="q-next show" onclick="startQuiz()">もう一度</button></div>`;
     return;
   }
-  const w=qSet[qIdx];
-  const wrong=shuffle(allWords.filter(x=>x.jp!==w.jp)).slice(0,3);
-  const opts=shuffle([w,...wrong]);
+  const {w,type}=qSet[qIdx];
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let field,prompt,mainHtml,optCn=false,autoplay=false;
+  if(type==='jp2ch'){
+    field='ch';prompt='この意味の単語は？';optCn=true;
+    mainHtml=`<div class="q-main q-jp">${esc(w.jp)}</div>`;
+  }else if(type==='ch2pin'){
+    field='pin';prompt='この単語のピンインは？';
+    mainHtml=`<div class="q-main cn">${esc(w.ch)}</div>`;
+  }else if(type==='listen'){
+    field='jp';prompt='音声を聞いて意味を選ぼう';autoplay=true;
+    mainHtml=`<div class="q-listen"><button class="q-play" id="qplay" aria-label="再生">${SPK}<span>もう一度聞く</span></button></div>`;
+  }else{
+    field='jp';prompt='この単語の意味は？';
+    mainHtml=`<div class="q-main cn">${esc(w.ch)}</div>
+      <div class="ph-pin" style="text-align:center">${esc(w.pin)}
+        <button class="spk" style="vertical-align:middle;width:30px;height:30px;margin-left:6px" aria-label="発音">${SPK}</button></div>`;
+  }
+  const opts=shuffle([w,...distractors(field,w[field],3)]);
   area.innerHTML=`<div class="quiz-box">
     <div class="bar"><i style="width:${qIdx/qSet.length*100}%"></i></div>
     <div class="q-meta"><span>第 ${qIdx+1} 問 / 10</span><span>正解 ${qScore}</span></div>
-    <div class="q-prompt">この単語の意味は？</div>
-    <div class="q-main cn">${w.ch}</div>
-    <div class="ph-pin" style="text-align:center">${w.pin}
-      <button class="spk" style="vertical-align:middle;width:30px;height:30px;margin-left:6px" aria-label="発音">${SPK}</button></div>
-    <div class="q-opts"></div>
+    <div class="q-prompt">${prompt}</div>
+    ${mainHtml}
+    <div class="q-opts${optCn?' cn':''}"></div>
     <button class="q-next" id="qnext">次へ →</button>
   </div>`;
-  area.querySelector('.spk').onclick=()=>speak(w.ch);
+  const spk=area.querySelector('.spk');if(spk)spk.onclick=()=>speak(w.ch);
+  const play=area.querySelector('#qplay');if(play)play.onclick=()=>speak(w.ch);
+  if(autoplay)speak(w.ch);
   const ow=area.querySelector('.q-opts');
   opts.forEach(o=>{
-    const b=document.createElement('button');b.className='opt';b.textContent=o.jp;
+    const b=document.createElement('button');b.className='opt';b.textContent=o[field];
     b.onclick=()=>{
       const all=ow.querySelectorAll('.opt');all.forEach(x=>x.disabled=true);
       markStudy();learnWord(w.ch);
-      if(o.jp===w.jp){b.classList.add('correct');qScore++;}
-      else{b.classList.add('wrong');addFav(w.ch);all.forEach(x=>{if(x.textContent===w.jp)x.classList.add('correct');});}
+      if(o[field]===w[field]){b.classList.add('correct');qScore++;}
+      else{b.classList.add('wrong');addFav(w.ch);all.forEach(x=>{if(x.textContent===w[field])x.classList.add('correct');});}
       speak(w.ch);
       area.querySelector('#qnext').classList.add('show');
       area.querySelector('.q-meta').children[1].textContent='正解 '+qScore;
