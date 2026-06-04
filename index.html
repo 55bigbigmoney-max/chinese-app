@@ -60,6 +60,17 @@
   h1{font-family:"Shippori Mincho",serif;font-weight:700;font-size:26px;letter-spacing:.04em;}
   .sub{color:var(--ink-soft);font-size:13px;margin-top:4px;letter-spacing:.08em;}
 
+  /* Level selector */
+  .levelbar{margin:14px 0 2px;}
+  .levels{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;justify-content:center;}
+  .levels::-webkit-scrollbar{display:none;}
+  .lv{flex:0 0 auto;border:1px solid var(--line);background:var(--card);border-radius:18px;
+    padding:7px 15px;font-size:13px;font-weight:700;color:var(--ink-soft);cursor:pointer;
+    font-family:inherit;transition:.2s;white-space:nowrap;}
+  .lv.active{background:var(--vermillion);color:#fff;border-color:var(--vermillion);
+    box-shadow:0 4px 12px rgba(168,57,47,.28);}
+  .lv-hint{font-size:11.5px;color:var(--ink-soft);margin-top:8px;text-align:center;letter-spacing:.02em;}
+
   /* Tabs */
   nav{
     position:sticky;top:0;z-index:20;margin:18px -18px 26px;padding:10px 14px;
@@ -186,6 +197,17 @@
     <div class="sub">PINYIN · 単語 · フレーズ · クイズ</div>
   </header>
 
+  <div class="levelbar">
+    <div class="levels" id="levels">
+      <button class="lv" data-lv="入門">入門</button>
+      <button class="lv" data-lv="初級">初級</button>
+      <button class="lv" data-lv="中級">中級</button>
+      <button class="lv" data-lv="上級">上級</button>
+      <button class="lv" data-lv="超上級">超上級</button>
+    </div>
+    <div class="lv-hint" id="lv-hint"></div>
+  </div>
+
   <nav id="nav">
     <button class="tab active" data-sec="home"><span class="cn">家</span>ホーム</button>
     <button class="tab" data-sec="tone"><span class="cn">声</span>声調</button>
@@ -271,7 +293,16 @@ const tones=[
   {ch:'吗',pin:'ma',name:'軽声 ／ 軽く短く',mean:'〜か？(疑問)',path:'M28 24 L36 24'}
 ];
 
-const vocab={
+const LEVELS=['入門','初級','中級','上級','超上級'];
+const LEVEL_HINT={
+  '入門':'中検 準4級・HSK1 — 発音と基礎の単語',
+  '初級':'中検 4級・HSK2〜3 — 日常の基本会話',
+  '中級':'中検 3級・HSK4 — 生活・仕事の話題',
+  '上級':'中検 2級・HSK5 — 抽象的な議論・成語',
+  '超上級':'中検 準1〜1級・HSK6 — 書面語・四字熟語'
+};
+const data={
+'入門':{vocab:{
   '数字':[
     {ch:'一',pin:'yī',jp:'1'},{ch:'二',pin:'èr',jp:'2'},{ch:'三',pin:'sān',jp:'3'},
     {ch:'四',pin:'sì',jp:'4'},{ch:'五',pin:'wǔ',jp:'5'},{ch:'六',pin:'liù',jp:'6'},
@@ -300,9 +331,7 @@ const vocab={
     {ch:'水',pin:'shuǐ',jp:'水'},{ch:'茶',pin:'chá',jp:'お茶'},{ch:'米饭',pin:'mǐfàn',jp:'ご飯'},
     {ch:'面条',pin:'miàntiáo',jp:'麺'},{ch:'菜',pin:'cài',jp:'料理／野菜'},{ch:'啤酒',pin:'píjiǔ',jp:'ビール'}
   ]
-};
-
-const phrases=[
+},phrases:[
   {ch:'你好！',pin:'nǐ hǎo!',jp:'こんにちは！'},
   {ch:'你好吗？',pin:'nǐ hǎo ma?',jp:'お元気ですか？'},
   {ch:'我很好。',pin:'wǒ hěn hǎo.',jp:'元気です。'},
@@ -317,7 +346,161 @@ const phrases=[
   {ch:'我听不懂。',pin:'wǒ tīng bu dǒng.',jp:'聞き取れません。'},
   {ch:'请再说一遍。',pin:'qǐng zài shuō yí biàn.',jp:'もう一度言ってください。'},
   {ch:'再见！',pin:'zàijiàn!',jp:'さようなら！'}
-];
+]},
+'初級':{vocab:{
+  '時間':[
+    {ch:'今天',pin:'jīntiān',jp:'今日'},{ch:'明天',pin:'míngtiān',jp:'明日'},{ch:'昨天',pin:'zuótiān',jp:'昨日'},
+    {ch:'现在',pin:'xiànzài',jp:'今・現在'},{ch:'早上',pin:'zǎoshang',jp:'朝'},{ch:'晚上',pin:'wǎnshang',jp:'夜・晩'},
+    {ch:'星期',pin:'xīngqī',jp:'週・曜日'},{ch:'点',pin:'diǎn',jp:'〜時'},{ch:'分钟',pin:'fēnzhōng',jp:'〜分間'}
+  ],
+  '家族':[
+    {ch:'爸爸',pin:'bàba',jp:'父'},{ch:'妈妈',pin:'māma',jp:'母'},{ch:'哥哥',pin:'gēge',jp:'兄'},
+    {ch:'姐姐',pin:'jiějie',jp:'姉'},{ch:'弟弟',pin:'dìdi',jp:'弟'},{ch:'妹妹',pin:'mèimei',jp:'妹'},
+    {ch:'儿子',pin:'érzi',jp:'息子'},{ch:'女儿',pin:'nǚ ér',jp:'娘'},{ch:'朋友',pin:'péngyou',jp:'友達'}
+  ],
+  '動詞':[
+    {ch:'学习',pin:'xuéxí',jp:'勉強する'},{ch:'工作',pin:'gōngzuò',jp:'働く・仕事'},{ch:'喜欢',pin:'xǐhuan',jp:'好き'},
+    {ch:'想',pin:'xiǎng',jp:'〜したい・思う'},{ch:'知道',pin:'zhīdào',jp:'知っている'},{ch:'买',pin:'mǎi',jp:'買う'},
+    {ch:'卖',pin:'mài',jp:'売る'},{ch:'住',pin:'zhù',jp:'住む'},{ch:'开',pin:'kāi',jp:'開ける・運転する'}
+  ],
+  '形容詞':[
+    {ch:'高',pin:'gāo',jp:'高い'},{ch:'长',pin:'cháng',jp:'長い'},{ch:'短',pin:'duǎn',jp:'短い'},
+    {ch:'快',pin:'kuài',jp:'速い'},{ch:'慢',pin:'màn',jp:'遅い'},{ch:'新',pin:'xīn',jp:'新しい'},
+    {ch:'忙',pin:'máng',jp:'忙しい'},{ch:'累',pin:'lèi',jp:'疲れている'},{ch:'冷',pin:'lěng',jp:'寒い'},{ch:'热',pin:'rè',jp:'暑い'}
+  ],
+  '場所':[
+    {ch:'学校',pin:'xuéxiào',jp:'学校'},{ch:'公司',pin:'gōngsī',jp:'会社'},{ch:'医院',pin:'yīyuàn',jp:'病院'},
+    {ch:'车站',pin:'chēzhàn',jp:'駅'},{ch:'商店',pin:'shāngdiàn',jp:'店'},{ch:'饭店',pin:'fàndiàn',jp:'ホテル・食堂'},
+    {ch:'银行',pin:'yínháng',jp:'銀行'},{ch:'机场',pin:'jīchǎng',jp:'空港'},{ch:'洗手间',pin:'xǐshǒujiān',jp:'お手洗い'}
+  ]
+},phrases:[
+  {ch:'你是哪国人？',pin:'nǐ shì nǎ guó rén?',jp:'どこの国の方ですか？'},
+  {ch:'我是日本人。',pin:'wǒ shì Rìběn rén.',jp:'私は日本人です。'},
+  {ch:'现在几点？',pin:'xiànzài jǐ diǎn?',jp:'今何時ですか？'},
+  {ch:'今天星期几？',pin:'jīntiān xīngqī jǐ?',jp:'今日は何曜日ですか？'},
+  {ch:'你家有几口人？',pin:'nǐ jiā yǒu jǐ kǒu rén?',jp:'ご家族は何人ですか？'},
+  {ch:'我喜欢中国菜。',pin:'wǒ xǐhuan Zhōngguó cài.',jp:'中華料理が好きです。'},
+  {ch:'这个用中文怎么说？',pin:'zhège yòng Zhōngwén zěnme shuō?',jp:'これは中国語で何と言いますか？'},
+  {ch:'太贵了，便宜一点儿吧。',pin:'tài guì le, piányi yìdiǎnr ba.',jp:'高すぎます、少し安くして。'},
+  {ch:'请问，洗手间在哪儿？',pin:'qǐngwèn, xǐshǒujiān zài nǎr?',jp:'すみません、お手洗いはどこですか？'},
+  {ch:'车站怎么走？',pin:'chēzhàn zěnme zǒu?',jp:'駅へはどう行きますか？'},
+  {ch:'我想买一张去北京的票。',pin:'wǒ xiǎng mǎi yì zhāng qù Běijīng de piào.',jp:'北京行きの切符を1枚買いたいです。'},
+  {ch:'请再说一遍，好吗？',pin:'qǐng zài shuō yí biàn, hǎo ma?',jp:'もう一度言ってくれますか？'}
+]},
+'中級':{vocab:{
+  '動詞':[
+    {ch:'介绍',pin:'jièshào',jp:'紹介する'},{ch:'帮助',pin:'bāngzhù',jp:'助ける'},{ch:'准备',pin:'zhǔnbèi',jp:'準備する'},
+    {ch:'希望',pin:'xīwàng',jp:'望む'},{ch:'觉得',pin:'juéde',jp:'思う・感じる'},{ch:'参加',pin:'cānjiā',jp:'参加する'},
+    {ch:'努力',pin:'nǔlì',jp:'努力する'},{ch:'解决',pin:'jiějué',jp:'解決する'},{ch:'习惯',pin:'xíguàn',jp:'慣れる・習慣'},{ch:'决定',pin:'juédìng',jp:'決める'}
+  ],
+  '名詞':[
+    {ch:'文化',pin:'wénhuà',jp:'文化'},{ch:'历史',pin:'lìshǐ',jp:'歴史'},{ch:'社会',pin:'shèhuì',jp:'社会'},
+    {ch:'环境',pin:'huánjìng',jp:'環境'},{ch:'健康',pin:'jiànkāng',jp:'健康'},{ch:'计划',pin:'jìhuà',jp:'計画'},
+    {ch:'机会',pin:'jīhuì',jp:'機会'},{ch:'经验',pin:'jīngyàn',jp:'経験'},{ch:'能力',pin:'nénglì',jp:'能力'}
+  ],
+  '形容詞':[
+    {ch:'重要',pin:'zhòngyào',jp:'重要'},{ch:'简单',pin:'jiǎndān',jp:'簡単'},{ch:'复杂',pin:'fùzá',jp:'複雑'},
+    {ch:'方便',pin:'fāngbiàn',jp:'便利'},{ch:'麻烦',pin:'máfan',jp:'面倒'},{ch:'满意',pin:'mǎnyì',jp:'満足'},
+    {ch:'特别',pin:'tèbié',jp:'特別'},{ch:'普通',pin:'pǔtōng',jp:'普通'},{ch:'安全',pin:'ānquán',jp:'安全'},{ch:'热闹',pin:'rènao',jp:'にぎやか'}
+  ],
+  '副詞・接続':[
+    {ch:'已经',pin:'yǐjīng',jp:'すでに'},{ch:'一定',pin:'yídìng',jp:'必ず'},{ch:'当然',pin:'dāngrán',jp:'もちろん'},
+    {ch:'比较',pin:'bǐjiào',jp:'わりと'},{ch:'经常',pin:'jīngcháng',jp:'しょっちゅう'},{ch:'然后',pin:'ránhòu',jp:'それから'},
+    {ch:'但是',pin:'dànshì',jp:'しかし'},{ch:'因为',pin:'yīnwèi',jp:'なぜなら'},{ch:'所以',pin:'suǒyǐ',jp:'だから'},{ch:'如果',pin:'rúguǒ',jp:'もし'}
+  ],
+  '仕事':[
+    {ch:'会议',pin:'huìyì',jp:'会議'},{ch:'同事',pin:'tóngshì',jp:'同僚'},{ch:'经理',pin:'jīnglǐ',jp:'マネージャー'},
+    {ch:'顾客',pin:'gùkè',jp:'顧客'},{ch:'出差',pin:'chūchāi',jp:'出張'},{ch:'加班',pin:'jiābān',jp:'残業'}
+  ]
+},phrases:[
+  {ch:'我觉得这个主意不错。',pin:'wǒ juéde zhège zhǔyi búcuò.',jp:'この案はいいと思います。'},
+  {ch:'你能帮我一个忙吗？',pin:'nǐ néng bāng wǒ yí ge máng ma?',jp:'手伝ってもらえますか？'},
+  {ch:'没问题，交给我吧。',pin:'méi wèntí, jiāo gěi wǒ ba.',jp:'問題ありません、任せてください。'},
+  {ch:'我们什么时候开会？',pin:'wǒmen shénme shíhou kāihuì?',jp:'会議はいつですか？'},
+  {ch:'对不起，让你久等了。',pin:'duìbuqǐ, ràng nǐ jiǔ děng le.',jp:'お待たせしてすみません。'},
+  {ch:'因为堵车，所以我迟到了。',pin:'yīnwèi dǔchē, suǒyǐ wǒ chídào le.',jp:'渋滞で遅れました。'},
+  {ch:'如果有时间，我想去看看。',pin:'rúguǒ yǒu shíjiān, wǒ xiǎng qù kànkan.',jp:'時間があれば行ってみたいです。'},
+  {ch:'请多关照。',pin:'qǐng duō guānzhào.',jp:'よろしくお願いします。'},
+  {ch:'我对中国文化很感兴趣。',pin:'wǒ duì Zhōngguó wénhuà hěn gǎn xìngqù.',jp:'中国文化にとても興味があります。'},
+  {ch:'麻烦您说慢一点儿。',pin:'máfan nín shuō màn yìdiǎnr.',jp:'もう少しゆっくり話してください。'}
+]},
+'上級':{vocab:{
+  '動詞':[
+    {ch:'提高',pin:'tígāo',jp:'高める'},{ch:'增加',pin:'zēngjiā',jp:'増やす'},{ch:'减少',pin:'jiǎnshǎo',jp:'減らす'},
+    {ch:'改变',pin:'gǎibiàn',jp:'変える'},{ch:'影响',pin:'yǐngxiǎng',jp:'影響する'},{ch:'发展',pin:'fāzhǎn',jp:'発展する'},
+    {ch:'实现',pin:'shíxiàn',jp:'実現する'},{ch:'表达',pin:'biǎodá',jp:'表現する'},{ch:'强调',pin:'qiángdiào',jp:'強調する'},{ch:'避免',pin:'bìmiǎn',jp:'避ける'}
+  ],
+  '名詞':[
+    {ch:'经济',pin:'jīngjì',jp:'経済'},{ch:'政治',pin:'zhèngzhì',jp:'政治'},{ch:'科技',pin:'kējì',jp:'科学技術'},
+    {ch:'教育',pin:'jiàoyù',jp:'教育'},{ch:'责任',pin:'zérèn',jp:'責任'},{ch:'态度',pin:'tàidu',jp:'態度'},
+    {ch:'关系',pin:'guānxi',jp:'関係'},{ch:'压力',pin:'yālì',jp:'プレッシャー'},{ch:'优势',pin:'yōushì',jp:'優位'},{ch:'趋势',pin:'qūshì',jp:'傾向'}
+  ],
+  '形容詞':[
+    {ch:'优秀',pin:'yōuxiù',jp:'優秀'},{ch:'严重',pin:'yánzhòng',jp:'深刻'},{ch:'明显',pin:'míngxiǎn',jp:'明らか'},
+    {ch:'合适',pin:'héshì',jp:'適切'},{ch:'积极',pin:'jījí',jp:'積極的'},{ch:'消极',pin:'xiāojí',jp:'消極的'},
+    {ch:'主要',pin:'zhǔyào',jp:'主要な'},{ch:'详细',pin:'xiángxì',jp:'詳しい'},{ch:'充分',pin:'chōngfèn',jp:'十分な'},{ch:'广泛',pin:'guǎngfàn',jp:'広範な'}
+  ],
+  '書面・接続':[
+    {ch:'因此',pin:'yīncǐ',jp:'それゆえ'},{ch:'然而',pin:'rán ér',jp:'しかしながら'},{ch:'不仅',pin:'bùjǐn',jp:'〜だけでなく'},
+    {ch:'而且',pin:'érqiě',jp:'その上'},{ch:'否则',pin:'fǒuzé',jp:'さもなければ'},{ch:'例如',pin:'lìrú',jp:'例えば'},
+    {ch:'总之',pin:'zǒngzhī',jp:'要するに'},{ch:'尽管',pin:'jǐnguǎn',jp:'〜にもかかわらず'}
+  ],
+  '成語':[
+    {ch:'马马虎虎',pin:'mǎmǎhūhū',jp:'いいかげん'},{ch:'乱七八糟',pin:'luànqībāzāo',jp:'めちゃくちゃ'},
+    {ch:'一举两得',pin:'yìjǔliǎngdé',jp:'一石二鳥'},{ch:'入乡随俗',pin:'rùxiāngsuísú',jp:'郷に入れば郷に従え'},
+    {ch:'名副其实',pin:'míngfùqíshí',jp:'名実ともに'},{ch:'全力以赴',pin:'quánlìyǐfù',jp:'全力を尽くす'}
+  ]
+},phrases:[
+  {ch:'我完全同意你的看法。',pin:'wǒ wánquán tóngyì nǐ de kànfǎ.',jp:'あなたの見方に全く同感です。'},
+  {ch:'这个问题值得深入讨论。',pin:'zhège wèntí zhídé shēnrù tǎolùn.',jp:'この問題は深く議論する価値があります。'},
+  {ch:'随着经济的发展，环境问题越来越严重。',pin:'suízhe jīngjì de fāzhǎn, huánjìng wèntí yuèláiyuè yánzhòng.',jp:'経済発展に伴い、環境問題はますます深刻になっています。'},
+  {ch:'我们应该从长远的角度考虑。',pin:'wǒmen yīnggāi cóng chángyuǎn de jiǎodù kǎolǜ.',jp:'長期的な視点から考えるべきです。'},
+  {ch:'无论如何，我都会支持你。',pin:'wúlùn rúhé, wǒ dōu huì zhīchí nǐ.',jp:'何があっても、私はあなたを支持します。'},
+  {ch:'这件事给我留下了深刻的印象。',pin:'zhè jiàn shì gěi wǒ liúxià le shēnkè de yìnxiàng.',jp:'この出来事は私に深い印象を残しました。'},
+  {ch:'据我所知，情况并不乐观。',pin:'jù wǒ suǒ zhī, qíngkuàng bìng bù lèguān.',jp:'私の知る限り、状況は楽観できません。'},
+  {ch:'百闻不如一见。',pin:'bǎiwén bùrú yíjiàn.',jp:'百聞は一見にしかず。'}
+]},
+'超上級':{vocab:{
+  '書面語動詞':[
+    {ch:'阐述',pin:'chǎnshù',jp:'詳述する'},{ch:'弥补',pin:'míbǔ',jp:'補う'},{ch:'倡导',pin:'chàngdǎo',jp:'提唱する'},
+    {ch:'履行',pin:'lǚxíng',jp:'履行する'},{ch:'兼顾',pin:'jiāngù',jp:'両立させる'},{ch:'制约',pin:'zhìyuē',jp:'制約する'},
+    {ch:'彰显',pin:'zhāngxiǎn',jp:'際立たせる'},{ch:'推动',pin:'tuīdòng',jp:'推進する'}
+  ],
+  '抽象名詞':[
+    {ch:'理念',pin:'lǐniàn',jp:'理念'},{ch:'机制',pin:'jīzhì',jp:'メカニズム'},{ch:'格局',pin:'géjú',jp:'構図・枠組み'},
+    {ch:'瓶颈',pin:'píngjǐng',jp:'ボトルネック'},{ch:'契机',pin:'qìjī',jp:'きっかけ'},{ch:'共识',pin:'gòngshí',jp:'共通認識'},
+    {ch:'范畴',pin:'fànchóu',jp:'範疇'},{ch:'隐患',pin:'yǐnhuàn',jp:'潜在的危険'},{ch:'弊端',pin:'bìduān',jp:'弊害'},{ch:'潜力',pin:'qiánlì',jp:'潜在力'}
+  ],
+  '四字熟語':[
+    {ch:'画蛇添足',pin:'huàshétiānzú',jp:'蛇足'},{ch:'守株待兔',pin:'shǒuzhūdàitù',jp:'古い慣習に固執する'},
+    {ch:'半途而废',pin:'bàntú ér fèi',jp:'中途半端でやめる'},{ch:'精益求精',pin:'jīngyìqiújīng',jp:'さらなる完璧を求める'},
+    {ch:'锦上添花',pin:'jǐnshàngtiānhuā',jp:'錦上に花を添える'},{ch:'雪上加霜',pin:'xuěshàngjiāshuāng',jp:'泣きっ面に蜂'},
+    {ch:'一丝不苟',pin:'yìsībùgǒu',jp:'几帳面'},{ch:'持之以恒',pin:'chízhīyǐhéng',jp:'根気よく続ける'}
+  ],
+  '書面語状態':[
+    {ch:'潜移默化',pin:'qiányímòhuà',jp:'知らぬ間に感化される'},{ch:'根深蒂固',pin:'gēnshēndìgù',jp:'根深い'},
+    {ch:'错综复杂',pin:'cuòzōngfùzá',jp:'複雑に入り組んだ'},{ch:'微不足道',pin:'wēibùzúdào',jp:'取るに足らない'},
+    {ch:'显而易见',pin:'xiǎn ér yì jiàn',jp:'明白である'},{ch:'不言而喻',pin:'bù yán ér yù',jp:'言うまでもない'}
+  ],
+  '書面語接続':[
+    {ch:'鉴于',pin:'jiànyú',jp:'〜に鑑みて'},{ch:'倘若',pin:'tǎngruò',jp:'もし〜ならば'},{ch:'从而',pin:'cóng ér',jp:'それによって'},
+    {ch:'反之',pin:'fǎnzhī',jp:'逆に'},{ch:'诚然',pin:'chéngrán',jp:'確かに'},{ch:'亟待',pin:'jídài',jp:'早急に要する'},
+    {ch:'务必',pin:'wùbì',jp:'必ず〜せよ'},{ch:'姑且',pin:'gūqiě',jp:'ひとまず'}
+  ]
+},phrases:[
+  {ch:'机不可失，时不再来。',pin:'jī bùkě shī, shí bú zài lái.',jp:'好機を逃すな。'},
+  {ch:'路遥知马力，日久见人心。',pin:'lùyáo zhī mǎlì, rìjiǔ jiàn rénxīn.',jp:'時が経てば人の真価がわかる。'},
+  {ch:'不入虎穴，焉得虎子。',pin:'bú rù hǔxué, yān dé hǔzǐ.',jp:'虎穴に入らずんば虎子を得ず。'},
+  {ch:'实践是检验真理的唯一标准。',pin:'shíjiàn shì jiǎnyàn zhēnlǐ de wéiyī biāozhǔn.',jp:'実践は真理を検証する唯一の基準である。'},
+  {ch:'这件事牵一发而动全身。',pin:'zhè jiàn shì qiān yí fà ér dòng quánshēn.',jp:'一部の動きが全体に影響する。'},
+  {ch:'我们必须未雨绸缪。',pin:'wǒmen bìxū wèiyǔchóumóu.',jp:'備えあれば憂いなし。'},
+  {ch:'据此，我们可以得出以下结论。',pin:'jùcǐ, wǒmen kěyǐ déchū yǐxià jiélùn.',jp:'これに基づき、以下の結論を導ける。'}
+]}
+};
+let curLevel='入門';
+try{const _l=localStorage.getItem('zh-level');if(_l&&LEVELS.includes(_l))curLevel=_l;}catch(e){}
+function curVocab(){return data[curLevel].vocab;}
+function curPhrases(){return data[curLevel].phrases;}
 
 /* ---------- タブ切替 ---------- */
 function go(sec){
@@ -328,6 +511,24 @@ function go(sec){
   if(sec==='vocab'){buildCats();renderCards();}
 }
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>go(t.dataset.sec)));
+
+/* ---------- レベル切替 ---------- */
+function setLevel(lv){
+  if(!LEVELS.includes(lv))return;
+  curLevel=lv;
+  try{localStorage.setItem('zh-level',lv);}catch(e){}
+  curCat=Object.keys(curVocab())[0];
+  refreshWords();
+  document.querySelectorAll('.lv').forEach(b=>b.classList.toggle('active',b.dataset.lv===lv));
+  const h=document.getElementById('lv-hint');if(h)h.textContent=LEVEL_HINT[lv];
+  buildCats();renderCards();renderPhrases();
+  if(document.getElementById('quiz').classList.contains('show'))startQuiz();
+}
+document.querySelectorAll('.lv').forEach(b=>b.addEventListener('click',()=>setLevel(b.dataset.lv)));
+(function(){
+  document.querySelectorAll('.lv').forEach(b=>b.classList.toggle('active',b.dataset.lv===curLevel));
+  const h=document.getElementById('lv-hint');if(h)h.textContent=LEVEL_HINT[curLevel];
+})();
 
 /* ---------- 声調 ---------- */
 const tl=document.getElementById('tone-list');
@@ -359,16 +560,16 @@ function isFav(ch){return favs.includes(ch);}
 function toggleFav(ch){favs=isFav(ch)?favs.filter(x=>x!==ch):favs.concat(ch);saveFavs();}
 function addFav(ch){if(!isFav(ch)){favs.push(ch);saveFavs();}}
 const wordByCh={};
-Object.values(vocab).forEach(a=>a.forEach(w=>{wordByCh[w.ch]=w;}));
+LEVELS.forEach(lv=>Object.values(data[lv].vocab).forEach(a=>a.forEach(w=>{wordByCh[w.ch]=w;})));
 function favWords(){return favs.map(ch=>wordByCh[ch]).filter(Boolean);}
 
 /* ---------- 単語 ---------- */
 const catWrap=document.getElementById('cats');
 const cardWrap=document.getElementById('cards');
-let curCat=Object.keys(vocab)[0];
+let curCat=Object.keys(curVocab())[0];
 function buildCats(){
   catWrap.innerHTML='';
-  [FAV_CAT,...Object.keys(vocab)].forEach(c=>{
+  [FAV_CAT,...Object.keys(curVocab())].forEach(c=>{
     const b=document.createElement('button');
     b.className='cat'+(c===curCat?' active':'');
     b.textContent=c===FAV_CAT?`${FAV_CAT} (${favWords().length})`:c;
@@ -378,7 +579,7 @@ function buildCats(){
 }
 function renderCards(){
   cardWrap.innerHTML='';
-  const list=curCat===FAV_CAT?favWords():vocab[curCat];
+  const list=curCat===FAV_CAT?favWords():curVocab()[curCat];
   if(curCat===FAV_CAT&&list.length===0){
     cardWrap.innerHTML='<div class="empty">まだ苦手単語がありません。<br>カードの☆を押すか、クイズで間違えた単語が自動で登録されます。</div>';
     return;
@@ -409,24 +610,31 @@ renderCards();
 
 /* ---------- フレーズ ---------- */
 const pl=document.getElementById('phrase-list');
-phrases.forEach(p=>{
-  const d=document.createElement('div');d.className='ph';
-  d.innerHTML=`
-    <div class="ph-body">
-      <div class="ph-ch">${p.ch}</div>
-      <div class="ph-pin">${p.pin}</div>
-      <div class="ph-jp">${p.jp}</div>
-    </div>
-    <button class="spk" aria-label="発音">${SPK}</button>`;
-  d.querySelector('.spk').onclick=()=>speak(p.ch);
-  pl.appendChild(d);
-});
+function renderPhrases(){
+  pl.innerHTML='';
+  curPhrases().forEach(p=>{
+    const d=document.createElement('div');d.className='ph';
+    d.innerHTML=`
+      <div class="ph-body">
+        <div class="ph-ch">${p.ch}</div>
+        <div class="ph-pin">${p.pin}</div>
+        <div class="ph-jp">${p.jp}</div>
+      </div>
+      <button class="spk" aria-label="発音">${SPK}</button>`;
+    d.querySelector('.spk').onclick=()=>speak(p.ch);
+    pl.appendChild(d);
+  });
+}
+renderPhrases();
 
 /* ---------- クイズ ---------- */
-const allWords=[];Object.values(vocab).forEach(a=>a.forEach(w=>allWords.push(w)));
+let allWords=[];
+function refreshWords(){allWords=[];Object.values(curVocab()).forEach(a=>a.forEach(w=>allWords.push(w)));}
+refreshWords();
 let qSet=[],qIdx=0,qScore=0;
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function startQuiz(){
+  refreshWords();
   qSet=shuffle(allWords).slice(0,10);qIdx=0;qScore=0;renderQ();
 }
 function renderQ(){
