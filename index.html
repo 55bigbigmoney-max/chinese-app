@@ -226,6 +226,22 @@
   .opt:disabled{cursor:default;}
   .q-next{margin-top:18px;border:none;background:var(--ink);color:var(--paper);border-radius:24px;padding:12px 28px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;display:none;}
   .q-next.show{display:inline-block;}
+  .q-target{min-height:54px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:18px;padding:12px;border:2px dashed var(--line);border-radius:14px;background:var(--paper-deep);transition:.2s;}
+  .q-target.ok{border-style:solid;border-color:var(--jade);background:rgba(58,125,68,.08);}
+  .q-target.ng{border-style:solid;border-color:var(--vermillion);background:rgba(168,57,47,.07);}
+  .q-bank{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;min-height:48px;}
+  .q-target.cn .tok,.q-bank.cn .tok{font-family:"Noto Serif SC",serif;}
+  .tok{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:10px 16px;font-size:20px;cursor:pointer;font-family:inherit;color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.06);transition:.15s;}
+  .tok:hover{border-color:var(--vermillion);}
+  .tok:active{transform:scale(.95);}
+  .q-actions{margin-top:16px;}
+  .q-check{border:none;background:var(--vermillion);color:#fff5e9;border-radius:24px;padding:12px 30px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;}
+  .q-check:disabled{background:var(--line);color:var(--ink-soft);cursor:default;}
+  .q-answer{display:none;margin-top:16px;font-size:14px;line-height:1.7;color:var(--ink);}
+  .q-answer.show{display:block;}
+  .q-answer .cn{font-family:"Noto Serif SC",serif;font-size:18px;}
+  .ok-t{color:var(--jade);}
+  .ng-t{color:var(--vermillion);}
   .bar{height:6px;background:var(--paper-deep);border-radius:4px;overflow:hidden;margin-bottom:18px;}
   .bar i{display:block;height:100%;background:var(--vermillion);transition:width .4s;}
   .result{text-align:center;}
@@ -970,6 +986,48 @@ const scenes={
     {ch:'我听不懂，请说慢一点。',pin:'wǒ tīng bu dǒng, qǐng shuō màn yìdiǎn.',jp:'聞き取れません、ゆっくり話してください。'}
   ]
 };
+/* ---------- 並べ替え用 文章データ ---------- */
+const builders={
+  '入門':[
+    {t:['我','是','日本人'],pin:'wǒ shì Rìběn rén.',jp:'私は日本人です。'},
+    {t:['你','叫','什么','名字'],pin:'nǐ jiào shénme míngzi?',jp:'お名前は何ですか？'},
+    {t:['这个','多少','钱'],pin:'zhège duōshao qián?',jp:'これはいくらですか？'},
+    {t:['我','要','一','杯','茶'],pin:'wǒ yào yì bēi chá.',jp:'お茶を一杯ください。'},
+    {t:['他','是','我','的','朋友'],pin:'tā shì wǒ de péngyou.',jp:'彼は私の友達です。'},
+    {t:['我','很','好'],pin:'wǒ hěn hǎo.',jp:'私は元気です。'}
+  ],
+  '初級':[
+    {t:['现在','几','点'],pin:'xiànzài jǐ diǎn?',jp:'今何時ですか？'},
+    {t:['我','想','去','中国'],pin:'wǒ xiǎng qù Zhōngguó.',jp:'中国に行きたいです。'},
+    {t:['今天','天气','很','好'],pin:'jīntiān tiānqì hěn hǎo.',jp:'今日は天気が良いです。'},
+    {t:['我','每天','坐','地铁','上班'],pin:'wǒ měitiān zuò dìtiě shàngbān.',jp:'毎日地下鉄で通勤します。'},
+    {t:['请','给','我','看','菜单'],pin:'qǐng gěi wǒ kàn càidān.',jp:'メニューを見せてください。'},
+    {t:['这','是','我','的','手机'],pin:'zhè shì wǒ de shǒujī.',jp:'これは私の携帯です。'}
+  ],
+  '中級':[
+    {t:['我','觉得','这个','主意','不错'],pin:'wǒ juéde zhège zhǔyi búcuò.',jp:'この案はいいと思います。'},
+    {t:['因为','下雨','所以','我','没','去'],pin:'yīnwèi xiàyǔ suǒyǐ wǒ méi qù.',jp:'雨だったので行きませんでした。'},
+    {t:['你','能','帮','我','一个','忙','吗'],pin:'nǐ néng bāng wǒ yí ge máng ma?',jp:'手伝ってもらえますか？'},
+    {t:['我们','明天','开会'],pin:'wǒmen míngtiān kāihuì.',jp:'私たちは明日会議をします。'},
+    {t:['他','对','历史','很','感兴趣'],pin:'tā duì lìshǐ hěn gǎn xìngqù.',jp:'彼は歴史に興味があります。'}
+  ],
+  '上級':[
+    {t:['我','完全','同意','你','的','看法'],pin:'wǒ wánquán tóngyì nǐ de kànfǎ.',jp:'あなたの意見に全く同感です。'},
+    {t:['这个','问题','值得','深入','讨论'],pin:'zhège wèntí zhídé shēnrù tǎolùn.',jp:'この問題は深く議論する価値があります。'},
+    {t:['我们','应该','保护','环境'],pin:'wǒmen yīnggāi bǎohù huánjìng.',jp:'私たちは環境を守るべきです。'},
+    {t:['教育','对','社会','很','重要'],pin:'jiàoyù duì shèhuì hěn zhòngyào.',jp:'教育は社会にとって重要です。'},
+    {t:['他','的','态度','非常','积极'],pin:'tā de tàidu fēicháng jījí.',jp:'彼の態度は非常に積極的です。'}
+  ],
+  '超上級':[
+    {t:['我们','必须','未雨绸缪'],pin:'wǒmen bìxū wèiyǔchóumóu.',jp:'備えあれば憂いなし。'},
+    {t:['这个','措施','行之有效'],pin:'zhège cuòshī xíngzhīyǒuxiào.',jp:'この措置は効果的だ。'},
+    {t:['我们','应该','循序渐进','地','学习'],pin:'wǒmen yīnggāi xúnxùjiànjìn de xuéxí.',jp:'順を追って学ぶべきです。'},
+    {t:['实践','是','检验','真理','的','标准'],pin:'shíjiàn shì jiǎnyàn zhēnlǐ de biāozhǔn.',jp:'実践は真理を検証する基準である。'},
+    {t:['这','件','事','非常','重要'],pin:'zhè jiàn shì fēicháng zhòngyào.',jp:'この件は非常に重要だ。'}
+  ]
+};
+function curBuilders(){return builders[curLevel]||[];}
+
 const sceneCatWrap=document.getElementById('scene-cats');
 const sceneList=document.getElementById('scene-list');
 let curScene=Object.keys(scenes)[0];
@@ -1029,8 +1087,12 @@ function distractors(field,correctVal,n){
 function startQuiz(){
   refreshWords();
   const types=silent?QTYPES.filter(t=>t!=='listen'):QTYPES;
-  qSet=shuffle(allWords).slice(0,10).map(w=>({w,type:types[Math.floor(Math.random()*types.length)]}));
-  qIdx=0;qScore=0;renderQ();
+  const bld=shuffle(curBuilders());
+  const nOrder=Math.min(bld.length,3);
+  const items=[];
+  for(let i=0;i<nOrder;i++)items.push({type:'order',b:bld[i]});
+  shuffle(allWords).slice(0,10-nOrder).forEach(w=>items.push({type:types[Math.floor(Math.random()*types.length)],w}));
+  qSet=shuffle(items);qIdx=0;qScore=0;renderQ();
 }
 function renderQ(){
   const area=document.getElementById('quiz-area');
@@ -1046,6 +1108,7 @@ function renderQ(){
       <button class="q-next show" onclick="startQuiz()">もう一度</button></div>`;
     return;
   }
+  if(qSet[qIdx].type==='order'){return renderOrder(area,qSet[qIdx].b);}
   const {w,type}=qSet[qIdx];
   const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   let field,prompt,mainHtml,optCn=false,autoplay=false;
@@ -1090,6 +1153,57 @@ function renderQ(){
     };
     ow.appendChild(b);
   });
+  area.querySelector('#qnext').onclick=()=>{qIdx++;renderQ();};
+}
+function renderOrder(area,b){
+  const correct=b.t.join('');
+  const bank=shuffle(b.t.map((txt,i)=>({txt,id:i})));
+  const picked=[];
+  let done=false;
+  area.innerHTML=`<div class="quiz-box">
+    <div class="bar"><i style="width:${qIdx/qSet.length*100}%"></i></div>
+    <div class="q-meta"><span>第 ${qIdx+1} 問 / 10</span><span>正解 ${qScore}</span></div>
+    <div class="q-prompt">語句を正しい順に並べ替えよう</div>
+    <div class="q-main q-jp" style="font-size:18px">${b.jp}</div>
+    <div class="q-target cn" id="qtarget"></div>
+    <div class="q-bank cn" id="qbank"></div>
+    <div class="q-actions"><button class="q-check" id="qcheck" disabled>確認</button></div>
+    <div class="q-answer" id="qans"></div>
+    <button class="q-next" id="qnext">次へ →</button>
+  </div>`;
+  const target=area.querySelector('#qtarget');
+  const bankEl=area.querySelector('#qbank');
+  const check=area.querySelector('#qcheck');
+  function draw(){
+    target.innerHTML='';bankEl.innerHTML='';
+    picked.forEach((tk,i)=>{
+      const sp=document.createElement('button');sp.className='tok';sp.textContent=tk.txt;
+      sp.onclick=()=>{if(done)return;bank.push(tk);picked.splice(i,1);draw();};
+      target.appendChild(sp);
+    });
+    bank.forEach((tk,i)=>{
+      const sp=document.createElement('button');sp.className='tok';sp.textContent=tk.txt;
+      sp.onclick=()=>{if(done)return;picked.push(tk);bank.splice(i,1);draw();};
+      bankEl.appendChild(sp);
+    });
+    check.disabled=picked.length!==b.t.length;
+  }
+  draw();
+  check.onclick=()=>{
+    if(done)return;done=true;
+    markStudy();
+    const ans=picked.map(t=>t.txt).join('');
+    const ok=ans===correct;
+    target.classList.add(ok?'ok':'ng');
+    if(ok)qScore++;
+    const ansDiv=area.querySelector('#qans');
+    ansDiv.innerHTML=`${ok?'<b class="ok-t">正解！</b>':'<b class="ng-t">惜しい！</b>'} 正しい語順：<span class="cn">${correct}</span><br><span class="ph-pin">${b.pin}　${b.jp}</span>`;
+    ansDiv.classList.add('show');
+    speak(correct);
+    check.disabled=true;
+    area.querySelector('.q-meta').children[1].textContent='正解 '+qScore;
+    area.querySelector('#qnext').classList.add('show');
+  };
   area.querySelector('#qnext').onclick=()=>{qIdx++;renderQ();};
 }
 </script>
